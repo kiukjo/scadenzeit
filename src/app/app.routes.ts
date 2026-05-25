@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -7,28 +8,52 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
-    path: 'deadlines',
+    path: 'onboarding',
     loadChildren: () =>
-      import('./features/deadlines/deadlines.routes').then((m) => m.DEADLINES_ROUTES),
+      import('./features/onboarding/onboarding.routes').then(
+        (m) => m.ONBOARDING_ROUTES,
+      ),
+  },
+  {
+    path: 'deadlines',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/deadlines/deadlines.routes').then(
+        (m) => m.DEADLINES_ROUTES,
+      ),
   },
   {
     path: 'documents',
+    canActivate: [authGuard],
     loadChildren: () =>
-      import('./features/documents/documents.routes').then((m) => m.DOCUMENTS_ROUTES),
+      import('./features/documents/documents.routes').then(
+        (m) => m.DOCUMENTS_ROUTES,
+      ),
   },
   {
     path: 'vehicles',
+    canActivate: [authGuard],
     loadChildren: () =>
-      import('./features/vehicles/vehicles.routes').then((m) => m.VEHICLES_ROUTES),
+      import('./features/vehicles/vehicles.routes').then(
+        (m) => m.VEHICLES_ROUTES,
+      ),
   },
   {
     path: 'scan',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('./features/scan/scan.routes').then((m) => m.SCAN_ROUTES),
   },
   {
     path: 'settings',
+    canActivate: [authGuard],
     loadChildren: () =>
-      import('./features/settings/settings.routes').then((m) => m.SETTINGS_ROUTES),
+      import('./features/settings/settings.routes').then(
+        (m) => m.SETTINGS_ROUTES,
+      ),
+  },
+  {
+    path: '**',
+    redirectTo: 'deadlines',
   },
 ];
