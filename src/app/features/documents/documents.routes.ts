@@ -6,4 +6,11 @@ export const DOCUMENTS_ROUTES: Routes = [
     loadComponent: () =>
       import('./documents.component').then((m) => m.DocumentsComponent),
   },
+  {
+    path: 'upload',
+    loadComponent: () =>
+      import('./document-upload/document-upload.component').then(
+        (m) => m.DocumentUploadComponent,
+      ),
+  },
 ];

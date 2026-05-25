@@ -156,6 +156,25 @@ export class DeadlineFormComponent {
   readonly notes = signal('');
   readonly isSaving = signal(false);
 
+  constructor() {
+    // Pre-popola il form se navigato dallo scanner (QR/CBill o OCR)
+    const state = history.state as { draft?: Partial<{ customName: string; dueDate: Date | string; amountCents: number; category: DeadlineCategory; recurrence: DeadlineRecurrence; notes: string }> };
+    const draft = state?.draft;
+    if (draft) {
+      if (draft.customName) this.name.set(draft.customName);
+      if (draft.category)   this.category.set(draft.category);
+      if (draft.recurrence) this.recurrence.set(draft.recurrence);
+      if (draft.notes)      this.notes.set(draft.notes);
+      if (draft.dueDate) {
+        const d = draft.dueDate instanceof Date ? draft.dueDate : new Date(draft.dueDate);
+        if (!isNaN(d.getTime())) this.dueDate.set(this.toDateInputValue(d));
+      }
+      if (draft.amountCents && draft.amountCents > 0) {
+        this.amountStr.set((draft.amountCents / 100).toFixed(2));
+      }
+    }
+  }
+
   // ── Dati statici ──────────────────────────────────────────────────────────
   readonly categories = CATEGORIES;
   readonly recurrences = RECURRENCES;
@@ -224,5 +243,13 @@ export class DeadlineFormComponent {
 
   goBack(): void {
     this.router.navigate(['/deadlines']);
+  }
+
+  /** Converte una Date nel formato YYYY-MM-DD richiesto da <input type="date"> */
+  private toDateInputValue(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 }
