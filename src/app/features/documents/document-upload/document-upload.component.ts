@@ -3,8 +3,10 @@ import { Router } from '@angular/router';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { DocumentService } from '../../../core/services/document.service';
+import { SupabaseService } from '../../../core/services/supabase.service';
+import { SupabaseAuthService } from '../../../core/services/supabase-auth.service';
 
-type UploadState = 'idle' | 'capturing' | 'saving' | 'error';
+type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
 
 @Component({
   selector: 'app-document-upload',
@@ -50,8 +52,16 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'error';
         </div>
       }
 
-      @if (state() === 'capturing' || state() === 'saving') {
-        <p>{{ state() === 'capturing' ? 'Acquisizione in corso…' : 'Salvataggio…' }}</p>
+      @if (state() === 'capturing') {
+        <p>Acquisizione in corso…</p>
+      }
+
+      @if (state() === 'saving') {
+        <p>Salvataggio locale…</p>
+      }
+
+      @if (state() === 'uploading') {
+        <p>Upload su cloud…</p>
       }
 
       @if (state() === 'error') {
@@ -65,11 +75,13 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'error';
 })
 export class DocumentUploadComponent {
   private readonly documentService = inject(DocumentService);
-  private readonly router = inject(Router);
+  private readonly supabase        = inject(SupabaseService).client;
+  private readonly authService     = inject(SupabaseAuthService);
+  private readonly router          = inject(Router);
 
-  readonly state = signal<UploadState>('idle');
-  readonly filename = signal('');
-  readonly notes = signal('');
+  readonly state        = signal<UploadState>('idle');
+  readonly filename     = signal('');
+  readonly notes        = signal('');
   readonly errorMessage = signal('');
 
   // Esposto al template
@@ -88,14 +100,16 @@ export class DocumentUploadComponent {
         correctOrientation: true,
       });
 
-      if (!photo.path) throw new Error('Percorso file non disponibile');
+      if (!photo.path && !photo.webPath) {
+        throw new Error('Percorso file non disponibile');
+      }
 
       this.state.set('saving');
 
-      // Copia il file nella directory privata dell'app
+      // 1. Salva una copia locale nella directory privata dell'app (offline-first)
       const destName = `doc_${Date.now()}.jpg`;
       await Filesystem.copy({
-        from: photo.path,
+        from: photo.path ?? photo.webPath!,
         to: destName,
         toDirectory: Directory.Data,
       });
@@ -105,22 +119,40 @@ export class DocumentUploadComponent {
         directory: Directory.Data,
       });
 
-      // Ottieni dimensione file
       const stat = await Filesystem.stat({
         path: destName,
         directory: Directory.Data,
       });
 
-      // Salva il documento in IndexedDB
+      // 2. Costruisce il documento e lo salva in IndexedDB
       const doc = DocumentService.build({
-        filename: this.filename().trim(),
+        filename:  this.filename().trim(),
         localPath: uri,
-        mimeType: 'image/jpeg',
+        mimeType:  'image/jpeg',
         sizeBytes: stat.size,
-        notes: this.notes().trim() || undefined,
+        notes:     this.notes().trim() || undefined,
       });
 
-      await this.documentService.add(doc);
+      const docId = await this.documentService.add(doc);
+
+      // 3. Upload su Supabase Storage (solo se loggato e online)
+      const userId = this.authService.user()?.id;
+      if (userId && photo.webPath) {
+        try {
+          this.state.set('uploading');
+          const storagePath = await this.uploadToStorage(
+            userId,
+            doc.uuid,
+            photo.webPath,
+          );
+          // Aggiorna il record con il path cloud (riusa il campo r2Key)
+          await this.documentService.update(docId, { r2Key: storagePath });
+        } catch {
+          // Upload fallito — il documento resta locale, verrà sincronizzato dopo
+          console.warn('Upload Supabase Storage fallito — documento salvato solo in locale');
+        }
+      }
+
       await this.router.navigate(['/documents']);
 
     } catch (err) {
@@ -132,6 +164,28 @@ export class DocumentUploadComponent {
       this.errorMessage.set(`Errore: ${msg}`);
       this.state.set('error');
     }
+  }
+
+  private async uploadToStorage(
+    userId: string,
+    docUuid: string,
+    webPath: string,
+  ): Promise<string> {
+    // Recupera il blob dalla WebView URI
+    const response = await fetch(webPath);
+    const blob     = await response.blob();
+
+    const storagePath = `${userId}/${docUuid}.jpg`;
+
+    const { error } = await this.supabase.storage
+      .from('documents')
+      .upload(storagePath, blob, {
+        contentType: 'image/jpeg',
+        upsert:      true,
+      });
+
+    if (error) throw new Error(error.message);
+    return storagePath;
   }
 
   goBack(): void {
