@@ -1,16 +1,19 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { DocumentService } from '../../../core/services/document.service';
 import { SupabaseService } from '../../../core/services/supabase.service';
 import { SupabaseAuthService } from '../../../core/services/supabase-auth.service';
+import { SettingsService } from '../../../core/services/settings.service';
+import { PremiumGateComponent } from '../../../shared/components/premium-gate.component';
+import { FREE_TIER } from '../../../core/constants/free-tier.constants';
 
 type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
 
 @Component({
   selector: 'app-document-upload',
-  imports: [],
+  imports: [PremiumGateComponent],
   template: `
     <div class="document-upload-page">
       <header class="page-header">
@@ -18,9 +21,10 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
         <h1>Aggiungi documento</h1>
       </header>
 
-      @if (state() === 'idle') {
+      @if (isAtLimit()) {
+        <app-premium-gate type="documents" />
+      } @else if (state() === 'idle') {
         <div class="upload-options">
-
           <label>
             Nome documento *
             <input
@@ -50,21 +54,13 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
             </button>
           </div>
         </div>
-      }
-
-      @if (state() === 'capturing') {
+      } @else if (state() === 'capturing') {
         <p>Acquisizione in corso…</p>
-      }
-
-      @if (state() === 'saving') {
+      } @else if (state() === 'saving') {
         <p>Salvataggio locale…</p>
-      }
-
-      @if (state() === 'uploading') {
+      } @else if (state() === 'uploading') {
         <p>Upload su cloud…</p>
-      }
-
-      @if (state() === 'error') {
+      } @else if (state() === 'error') {
         <div class="upload-error">
           <p>{{ errorMessage() }}</p>
           <button (click)="state.set('idle')">Riprova</button>
@@ -77,7 +73,14 @@ export class DocumentUploadComponent {
   private readonly documentService = inject(DocumentService);
   private readonly supabase        = inject(SupabaseService).client;
   private readonly authService     = inject(SupabaseAuthService);
+  private readonly settingsService = inject(SettingsService);
   private readonly router          = inject(Router);
+
+  // ── Free tier gate ────────────────────────────────────────────────────────
+  readonly isAtLimit = computed(() => {
+    if (this.settingsService.profile()?.isPremium) return false;
+    return this.documentService.all().length >= FREE_TIER.MAX_DOCUMENTS;
+  });
 
   readonly state        = signal<UploadState>('idle');
   readonly filename     = signal('');
@@ -171,18 +174,13 @@ export class DocumentUploadComponent {
     docUuid: string,
     webPath: string,
   ): Promise<string> {
-    // Recupera il blob dalla WebView URI
-    const response = await fetch(webPath);
-    const blob     = await response.blob();
-
+    const response    = await fetch(webPath);
+    const blob        = await response.blob();
     const storagePath = `${userId}/${docUuid}.jpg`;
 
     const { error } = await this.supabase.storage
       .from('documents')
-      .upload(storagePath, blob, {
-        contentType: 'image/jpeg',
-        upsert:      true,
-      });
+      .upload(storagePath, blob, { contentType: 'image/jpeg', upsert: true });
 
     if (error) throw new Error(error.message);
     return storagePath;

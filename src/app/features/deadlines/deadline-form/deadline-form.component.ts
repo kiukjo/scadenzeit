@@ -4,7 +4,10 @@ import { DeadlineService } from '../../../core/services/deadline.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { DeadlineFormService } from '../../../core/services/deadline-form.service';
 import { NotificationSchedulerService } from '../../../core/services/notification-scheduler.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { DeadlineCategory, DeadlineRecurrence } from '../../../core/models';
+import { PremiumGateComponent } from '../../../shared/components/premium-gate.component';
+import { FREE_TIER } from '../../../core/constants/free-tier.constants';
 
 const CATEGORIES: { value: DeadlineCategory; label: string }[] = [
   { value: 'fisco',     label: 'Fisco' },
@@ -26,13 +29,17 @@ const REMINDER_OPTIONS = [1, 3, 7, 14, 30, 60, 90, 180];
 
 @Component({
   selector: 'app-deadline-form',
-  imports: [],
+  imports: [PremiumGateComponent],
   template: `
     <div class="deadline-form-page">
       <header class="page-header">
         <button (click)="goBack()">← Indietro</button>
         <h1>Nuova scadenza</h1>
       </header>
+
+      @if (isAtLimit()) {
+        <app-premium-gate type="deadlines" />
+      } @else {
 
       <!-- Suggerimento preset -->
       @if (preset()) {
@@ -136,15 +143,18 @@ const REMINDER_OPTIONS = [1, 3, 7, 14, 30, 60, 90, 180];
           @if (isSaving()) { Salvataggio… } @else { Salva scadenza }
         </button>
       </form>
+
+      } <!-- end @if isAtLimit -->
     </div>
   `,
 })
 export class DeadlineFormComponent {
   private readonly deadlineService = inject(DeadlineService);
-  private readonly catalogService = inject(CatalogService);
-  private readonly formService = inject(DeadlineFormService);
-  private readonly notifScheduler = inject(NotificationSchedulerService);
-  private readonly router = inject(Router);
+  private readonly catalogService  = inject(CatalogService);
+  private readonly formService     = inject(DeadlineFormService);
+  private readonly notifScheduler  = inject(NotificationSchedulerService);
+  private readonly settingsService = inject(SettingsService);
+  private readonly router          = inject(Router);
 
   // ── Campi form come signal ─────────────────────────────────────────────────
   readonly name = signal('');
@@ -155,6 +165,12 @@ export class DeadlineFormComponent {
   readonly reminderDays = signal<number[]>([7, 1]);
   readonly notes = signal('');
   readonly isSaving = signal(false);
+
+  // ── Free tier gate ────────────────────────────────────────────────────────
+  readonly isAtLimit = computed(() => {
+    if (this.settingsService.profile()?.isPremium) return false;
+    return this.deadlineService.all().length >= FREE_TIER.MAX_DEADLINES;
+  });
 
   constructor() {
     // Pre-popola il form se navigato dallo scanner (QR/CBill o OCR)
