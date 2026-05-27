@@ -45,18 +45,29 @@ export class SupabaseAuthService {
   }
 
   /**
-   * Invia un magic link all'email indicata.
-   * L'utente clicca il link nell'email → torna su /auth/callback.
+   * Invia un codice OTP a 6 cifre all'email indicata.
+   * Funziona su mobile (Capacitor) senza deep link — l'utente
+   * inserisce il codice direttamente nell'app.
    */
-  async signInWithMagicLink(email: string): Promise<{ sent: boolean }> {
+  async sendOtp(email: string): Promise<void> {
     const { error } = await this.sb.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      options: { shouldCreateUser: true },
     });
     if (error) throw error;
-    return { sent: true };
+  }
+
+  /**
+   * Verifica il codice OTP a 6 cifre inserito dall'utente.
+   * Se corretto, la sessione viene impostata automaticamente via onAuthStateChange.
+   */
+  async verifyOtp(email: string, token: string): Promise<void> {
+    const { error } = await this.sb.auth.verifyOtp({
+      email,
+      token,
+      type: 'email',
+    });
+    if (error) throw error;
   }
 
   async signOut(): Promise<void> {
