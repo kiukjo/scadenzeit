@@ -21,7 +21,9 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
         @if (user()) {
           <div class="settings-row">
             <span class="settings-label">Email</span>
-            <span class="settings-value">{{ user()!.email }}</span>
+            <span class="settings-value" style="font-size:.85rem;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              {{ user()!.email }}
+            </span>
           </div>
         }
         <div class="settings-row">
@@ -54,17 +56,15 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
         <section class="settings-premium-banner">
           <h2>ScadenzaIT Premium</h2>
           <ul>
-            <li>✓ Scadenze e documenti illimitati</li>
-            <li>✓ Sync su tutti i dispositivi</li>
-            <li>✓ Nessuna pubblicità</li>
+            <li>Scadenze e documenti illimitati</li>
+            <li>Sync su tutti i dispositivi</li>
+            <li>Nessuna pubblicità</li>
           </ul>
           <button class="btn-premium" (click)="showComingSoon.set(true)">
             Passa a Premium
           </button>
           @if (showComingSoon()) {
-            <p class="coming-soon">
-              🚀 Prossimamente disponibile su Google Play!
-            </p>
+            <p class="coming-soon">Prossimamente disponibile su Google Play!</p>
           }
         </section>
       }
@@ -75,7 +75,10 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
           <h2>Profilo</h2>
           @for (type of profileTypes(); track type) {
             <div class="settings-row">
-              <span class="settings-value">{{ profileLabel(type) }}</span>
+              <span class="settings-label">{{ profileLabel(type) }}</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-safe)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
             </div>
           }
         </section>
@@ -92,16 +95,24 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
 
       <!-- Logout -->
       <section class="settings-section">
-        <button
-          class="btn-logout"
-          (click)="logout()"
-          [disabled]="isLoggingOut()"
-        >
-          {{ isLoggingOut() ? 'Uscita in corso…' : 'Esci dall\'account' }}
-        </button>
+        <div style="padding:12px 16px">
+          <button
+            class="btn-logout"
+            (click)="logout()"
+            [disabled]="isLoggingOut()"
+          >
+            @if (isLoggingOut()) {
+              <span style="display:flex;align-items:center;gap:8px;justify-content:center">
+                <span style="width:14px;height:14px;border:2px solid rgba(255,77,109,.3);border-top-color:var(--color-overdue);border-radius:50%;animation:spin .8s linear infinite;display:inline-block"></span>
+                Uscita in corso…
+              </span>
+            } @else {
+              Esci dall'account
+            }
+          </button>
+        </div>
       </section>
 
-      <!-- Versione -->
       <p class="app-version">ScadenzaIT v0.4.0</p>
     </div>
   `,
@@ -113,16 +124,16 @@ export class SettingsComponent {
   private readonly documentService = inject(DocumentService);
   private readonly router          = inject(Router);
 
-  readonly user          = this.authService.user;
-  readonly profile       = this.settingsService.profile;
-  readonly isLoggingOut  = signal(false);
+  readonly user           = this.authService.user;
+  readonly profile        = this.settingsService.profile;
+  readonly isLoggingOut   = signal(false);
   readonly showComingSoon = signal(false);
 
   readonly maxDeadlines = FREE_TIER.MAX_DEADLINES;
   readonly maxDocuments = FREE_TIER.MAX_DOCUMENTS;
 
-  readonly isPremium     = computed(() => this.profile()?.isPremium ?? false);
-  readonly profileTypes  = computed(() => this.profile()?.profileTypes ?? []);
+  readonly isPremium    = computed(() => this.profile()?.isPremium ?? false);
+  readonly profileTypes = computed(() => this.profile()?.profileTypes ?? []);
   readonly deadlineCount = computed(() => this.deadlineService.all().length);
   readonly documentCount = computed(() => this.documentService.all().length);
 
@@ -133,11 +144,9 @@ export class SettingsComponent {
     () => !this.isPremium() && this.documentCount() >= this.maxDocuments,
   );
 
-  readonly lastSyncLabel = computed(() => {
-    // Leggiamo il valore dal settings in modo sincrono — già in memoria
-    const profile = this.profile();
-    return profile ? 'Sincronizzato' : 'Mai sincronizzato';
-  });
+  readonly lastSyncLabel = computed(() =>
+    this.profile() ? 'Sincronizzato' : 'Mai sincronizzato',
+  );
 
   profileLabel(type: string): string {
     const map: Record<string, string> = {

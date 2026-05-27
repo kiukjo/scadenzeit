@@ -15,60 +15,79 @@ type AuthStep = 'choose' | 'email' | 'otp' | 'loading' | 'error';
         <p class="auth-subtitle">Le tue scadenze, sempre in ordine.</p>
 
         @if (step() === 'choose') {
-          <div class="auth-options">
-            <button class="btn-google" (click)="step.set('email')">
+          <div class="auth-options" style="animation: fadeSlideUp 0.3s var(--ease-out) both">
+            <button class="btn-email" (click)="step.set('email')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
               Accedi con email
             </button>
           </div>
         }
 
         @if (step() === 'email') {
-          <form (submit)="$event.preventDefault(); sendOtp()">
+          <form class="auth-form" (submit)="$event.preventDefault(); sendOtp()">
             <p class="auth-hint">Inserisci la tua email — ti mandiamo un codice di accesso.</p>
-            <label>
-              Email
+            <div class="form-group">
+              <label>Email</label>
               <input
+                class="auth-input"
                 type="email"
                 [value]="email()"
                 (input)="email.set($any($event.target).value)"
                 placeholder="nome@esempio.it"
                 required
                 autofocus
+                style="text-align:left;font-size:1rem;letter-spacing:normal"
               />
-            </label>
-            <button type="submit" [disabled]="!email().includes('@')">
+            </div>
+            <button
+              type="submit"
+              class="auth-submit"
+              [disabled]="!email().includes('@')"
+            >
               Invia codice
             </button>
-            <button type="button" class="btn-back" (click)="step.set('choose')">← Indietro</button>
+            <button type="button" class="auth-back" (click)="step.set('choose')">
+              ← Indietro
+            </button>
           </form>
         }
 
         @if (step() === 'otp') {
-          <form (submit)="$event.preventDefault(); verifyCode()">
+          <form class="auth-form" (submit)="$event.preventDefault(); verifyCode()">
             <p class="auth-hint">
               Codice inviato a <strong>{{ email() }}</strong>.<br>
-              Controlla la email e inserisci il codice a 6 cifre.
+              Controlla la casella email e inserisci il codice.
             </p>
-            <label>
-              Codice di accesso
+            <div class="form-group">
+              <label>Codice di accesso</label>
               <input
+                class="otp-input"
                 type="text"
                 inputmode="numeric"
-                maxlength="6"
-                pattern="[0-9]{6}"
+                maxlength="8"
+                pattern="[0-9]{6,8}"
                 [value]="otpCode()"
                 (input)="otpCode.set($any($event.target).value)"
                 placeholder="123456"
                 autofocus
               />
-            </label>
-            <button type="submit" [disabled]="otpCode().length < 6">
+            </div>
+            <button
+              type="submit"
+              class="auth-submit"
+              [disabled]="otpCode().length < 6 || otpCode().length > 8"
+            >
               Accedi
             </button>
-            <button type="button" class="btn-back" (click)="resendOtp()">
+            <button type="button" class="auth-back" (click)="resendOtp()">
               Rimanda il codice
             </button>
-            <button type="button" class="btn-back" (click)="step.set('email')">← Cambia email</button>
+            <button type="button" class="auth-back" (click)="step.set('email')">
+              ← Cambia email
+            </button>
           </form>
         }
 
@@ -79,7 +98,7 @@ type AuthStep = 'choose' | 'email' | 'otp' | 'loading' | 'error';
         @if (step() === 'error') {
           <div class="auth-error">
             <p>{{ errorMessage() }}</p>
-            <button (click)="step.set('choose')">Riprova</button>
+            <button class="auth-back" (click)="step.set('choose')">Riprova</button>
           </div>
         }
       </div>
@@ -114,7 +133,6 @@ export class AuthComponent {
     try {
       this.step.set('loading');
       await this.authService.verifyOtp(this.email(), this.otpCode());
-      // Sessione impostata → controlla profilo e naviga
       await this.settings.loadProfile();
       const dest = this.settings.profile() ? '/deadlines' : '/onboarding';
       await this.router.navigate([dest]);

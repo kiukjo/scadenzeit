@@ -5,14 +5,23 @@ import { ImportoEuroPipe } from '../pipes/importo-euro.pipe';
 
 export type UrgencyLevel = 'overdue' | 'urgent' | 'warning' | 'safe';
 
+const CATEGORY_LABELS: Record<string, string> = {
+  fisco:      'Fisco',
+  veicoli:    'Veicoli',
+  sanita:     'Salute',
+  documenti:  'Documenti',
+  casa:       'Casa',
+  lavoro:     'Lavoro',
+};
+
 @Component({
   selector: 'app-deadline-card',
   imports: [ItalianDatePipe, ImportoEuroPipe],
   template: `
-    <div [attr.data-urgency]="urgency()">
-      <div class="card-header">
-        <span class="category-badge">{{ deadline().category }}</span>
-        <span class="urgency-label">{{ urgencyLabel() }}</span>
+    <div class="deadline-card" [attr.data-urgency]="urgency()">
+      <div class="card-top">
+        <span class="category-pill">{{ categoryLabel() }}</span>
+        <span class="urgency-chip">{{ urgencyLabel() }}</span>
       </div>
 
       <h3 class="card-title">{{ deadline().customName }}</h3>
@@ -20,7 +29,7 @@ export type UrgencyLevel = 'overdue' | 'urgent' | 'warning' | 'safe';
       <div class="card-meta">
         <span>{{ deadline().dueDate | italianDate }}</span>
         @if (deadline().amountCents) {
-          <span>{{ deadline().amountCents | importoEuro }}</span>
+          <span class="card-amount">{{ deadline().amountCents | importoEuro }}</span>
         }
       </div>
 
@@ -30,18 +39,25 @@ export type UrgencyLevel = 'overdue' | 'urgent' | 'warning' | 'safe';
 
       <div class="card-actions">
         <button (click)="onComplete.emit(deadline().id!)">
-          {{ deadline().completed ? 'Riapri' : 'Completata' }}
+          {{ deadline().completed ? '↩ Riapri' : '✓ Completata' }}
         </button>
-        <button (click)="onDelete.emit(deadline().id!)">Elimina</button>
+        <button (click)="onDelete.emit(deadline().id!)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>
+          </svg>
+        </button>
       </div>
     </div>
   `,
 })
 export class DeadlineCardComponent {
-  readonly deadline = input.required<Deadline>();
-
+  readonly deadline   = input.required<Deadline>();
   readonly onComplete = output<number>();
-  readonly onDelete = output<number>();
+  readonly onDelete   = output<number>();
+
+  readonly categoryLabel = computed(() =>
+    CATEGORY_LABELS[this.deadline().category] ?? this.deadline().category,
+  );
 
   readonly daysLeft = computed(() => {
     const d = new Date(this.deadline().dueDate);
@@ -53,19 +69,19 @@ export class DeadlineCardComponent {
 
   readonly urgency = computed((): UrgencyLevel => {
     const days = this.daysLeft();
-    if (days < 0) return 'overdue';
-    if (days <= 7) return 'urgent';
+    if (days < 0)   return 'overdue';
+    if (days <= 7)  return 'urgent';
     if (days <= 30) return 'warning';
     return 'safe';
   });
 
   readonly urgencyLabel = computed((): string => {
     const days = this.daysLeft();
-    if (days < 0) return `Scaduta ${Math.abs(days)} giorni fa`;
+    if (days < 0)   return `Scaduta ${Math.abs(days)}g fa`;
     if (days === 0) return 'Scade oggi!';
-    if (days === 1) return 'Scade domani!';
-    if (days <= 7) return `Scade tra ${days} giorni`;
-    if (days <= 30) return `Scade tra ${days} giorni`;
-    return `Scade tra ${days} giorni`;
+    if (days === 1) return 'Domani!';
+    if (days <= 7)  return `Tra ${days} giorni`;
+    if (days <= 30) return `Tra ${days} giorni`;
+    return `${days} giorni`;
   });
 }

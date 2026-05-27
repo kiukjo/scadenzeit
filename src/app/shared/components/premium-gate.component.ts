@@ -2,31 +2,28 @@ import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FREE_TIER } from '../../core/constants/free-tier.constants';
 
-/**
- * Banner mostrato quando l'utente free raggiunge il limite di scadenze o documenti.
- * Si usa direttamente nei form al posto del contenuto quando isAtLimit = true.
- */
 @Component({
   selector: 'app-premium-gate',
   imports: [RouterLink],
   template: `
     <div class="premium-gate">
-      <div class="premium-gate-icon">🔒</div>
-      <h2>Limite piano gratuito raggiunto</h2>
+      <div class="gate-icon">🔒</div>
+      <h3>Limite piano gratuito</h3>
 
       @if (type() === 'deadlines') {
         <p>
-          Hai raggiunto le <strong>{{ maxDeadlines }} scadenze</strong> incluse nel piano gratuito.
+          Hai raggiunto le <strong>{{ maxDeadlines }} scadenze</strong>
+          incluse nel piano gratuito.
         </p>
       } @else {
         <p>
-          Hai raggiunto i <strong>{{ maxDocuments }} documenti</strong> inclusi nel piano gratuito.
+          Hai raggiunto i <strong>{{ maxDocuments }} documenti</strong>
+          inclusi nel piano gratuito.
         </p>
       }
 
-      <p class="premium-gate-sub">
-        Passa a <strong>ScadenzaIT Premium</strong> per scadenze e documenti illimitati,
-        sync multi-dispositivo e nessuna pubblicità.
+      <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:20px">
+        Passa a Premium per scadenze illimitate, sync multi-dispositivo e nessuna pubblicità.
       </p>
 
       <a routerLink="/settings" class="btn-premium">
