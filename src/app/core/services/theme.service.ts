@@ -2,7 +2,7 @@ import { Injectable, signal, effect } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
-  readonly theme = signal<'dark' | 'light'>('dark');
+  readonly theme = signal<'dark' | 'light'>('light');
 
   constructor() {
     // Restore from localStorage

@@ -3,53 +3,23 @@
    Dark / Light switchable via [data-theme="dark|light"] on <html>
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Dark (default) ──────────────────────────────────────────── */
-:root, [data-theme="dark"] {
-  --bg-primary:       #0A0A0F;
-  --bg-elev:          #15151F;
-  --bg-surface:       rgba(255, 255, 255, 0.05);
+/* ── Light (default) ─────────────────────────────────────────── */
+:root, [data-theme="light"] {
+  --bg-primary:       #EEF0F7;
+  --bg-elev:          #FFFFFF;
+  --bg-surface:       rgba(10, 10, 30, 0.04);
   --accent:           #6C63FF;
   --accent-2:         #3B82F6;
   --accent-grad:      linear-gradient(135deg, #6C63FF 0%, #3B82F6 100%);
-  --text-primary:     #F0F0FF;
-  --text-secondary:   rgba(240, 240, 255, 0.60);
-  --text-tertiary:    rgba(240, 240, 255, 0.40);
+  --text-primary:     #0A0A1A;
+  --text-secondary:   rgba(10, 10, 30, 0.62);
+  --text-tertiary:    rgba(10, 10, 30, 0.42);
   --danger:           #FF4757;
   --warning:          #FFA502;
   --success:          #2ED573;
   --radius:           16px;
   --radius-lg:        24px;
   --radius-sm:        10px;
-  --glass:            rgba(255, 255, 255, 0.07);
-  --glass-strong:     rgba(255, 255, 255, 0.10);
-  --glass-border:     rgba(255, 255, 255, 0.12);
-  --bell-bg:          rgba(255, 255, 255, 0.07);
-  --bottom-nav-bg:    rgba(15, 16, 24, 0.72);
-  --modal-bg:         linear-gradient(180deg, #16161F 0%, #0B0B12 100%);
-  --confirm-bg:       rgba(22, 22, 30, 0.96);
-  --dropdown-bg:      rgba(20, 20, 30, 0.96);
-  --icon-tile-bg:     rgba(255, 255, 255, 0.06);
-  --icon-tile-border: rgba(255, 255, 255, 0.08);
-  --plate-bg:         rgba(255, 255, 255, 0.10);
-  --plate-border:     rgba(255, 255, 255, 0.14);
-  --skeleton-grad:    linear-gradient(90deg,
-    rgba(255,255,255,0.04) 0%,
-    rgba(255,255,255,0.10) 50%,
-    rgba(255,255,255,0.04) 100%);
-  --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
-  --nav-height: 64px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* ── Light ───────────────────────────────────────────────────── */
-[data-theme="light"] {
-  --bg-primary:       #EEF0F7;
-  --bg-elev:          #FFFFFF;
-  --bg-surface:       rgba(10, 10, 30, 0.04);
-  --text-primary:     #0A0A1A;
-  --text-secondary:   rgba(10, 10, 30, 0.62);
-  --text-tertiary:    rgba(10, 10, 30, 0.42);
   --glass:            rgba(255, 255, 255, 0.92);
   --glass-strong:     rgba(255, 255, 255, 0.98);
   --glass-border:     rgba(10, 10, 30, 0.08);
@@ -66,6 +36,36 @@
     rgba(10,10,30,0.05) 0%,
     rgba(10,10,30,0.10) 50%,
     rgba(10,10,30,0.05) 100%);
+  --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
+  --nav-height: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Dark ────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-primary:       #0A0A0F;
+  --bg-elev:          #15151F;
+  --bg-surface:       rgba(255, 255, 255, 0.05);
+  --text-primary:     #F0F0FF;
+  --text-secondary:   rgba(240, 240, 255, 0.60);
+  --text-tertiary:    rgba(240, 240, 255, 0.40);
+  --glass:            rgba(255, 255, 255, 0.07);
+  --glass-strong:     rgba(255, 255, 255, 0.10);
+  --glass-border:     rgba(255, 255, 255, 0.12);
+  --bell-bg:          rgba(255, 255, 255, 0.07);
+  --bottom-nav-bg:    rgba(15, 16, 24, 0.72);
+  --modal-bg:         linear-gradient(180deg, #16161F 0%, #0B0B12 100%);
+  --confirm-bg:       rgba(22, 22, 30, 0.96);
+  --dropdown-bg:      rgba(20, 20, 30, 0.96);
+  --icon-tile-bg:     rgba(255, 255, 255, 0.06);
+  --icon-tile-border: rgba(255, 255, 255, 0.08);
+  --plate-bg:         rgba(255, 255, 255, 0.10);
+  --plate-border:     rgba(255, 255, 255, 0.14);
+  --skeleton-grad:    linear-gradient(90deg,
+    rgba(255,255,255,0.04) 0%,
+    rgba(255,255,255,0.10) 50%,
+    rgba(255,255,255,0.04) 100%);
 }
 
 /* ── Reset ───────────────────────────────────────────────────── */
