@@ -11,110 +11,115 @@ type ScanState = 'idle' | 'requesting-permission' | 'scanning' | 'processing' | 
   selector: 'app-scan',
   imports: [],
   template: `
-    <div class="scan-page">
-      <header class="page-header">
-        <h1>Scansiona</h1>
+    <div class="screen">
+      <header class="header">
+        <h1 class="title">Scansiona</h1>
+        <p class="sub">Acquisisci automaticamente importo e data dalle bollette.</p>
       </header>
 
       @if (state() === 'idle') {
-        <p class="scan-subtitle">Acquisisce automaticamente importo e data dalle tue bollette.</p>
+        <div class="cards">
 
-        <div class="scan-options">
-          <button class="scan-option-card" (click)="startQrScan()">
-            <div class="scan-option-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-              </svg>
-            </div>
-            <div class="scan-option-text">
-              <strong>Scansiona QR / CBill</strong>
-              <span>Bollette e avvisi di pagamento con QR code</span>
-            </div>
-          </button>
+          <div class="stagger" [style.--i]="0">
+            <button class="card" (click)="startQrScan()">
+              <span class="card-ico" style="background:rgba(108,99,255,0.12);border-color:rgba(108,99,255,0.25)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6C63FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                </svg>
+              </span>
+              <div class="card-info">
+                <span class="card-name">Scansiona QR / CBill</span>
+                <span class="card-desc">Bollette e avvisi di pagamento con QR code</span>
+              </div>
+              <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
 
-          <button class="scan-option-card" (click)="startOcrScan()">
-            <div class="scan-option-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </div>
-            <div class="scan-option-text">
-              <strong>Foto bolletta (OCR)</strong>
-              <span>Scatta una foto — estraiamo data e importo</span>
-            </div>
-          </button>
+          <div class="stagger" [style.--i]="1">
+            <button class="card" (click)="startOcrScan()">
+              <span class="card-ico" style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.25)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+              </span>
+              <div class="card-info">
+                <span class="card-name">Foto bolletta (OCR)</span>
+                <span class="card-desc">Scatta una foto — estraiamo data e importo</span>
+              </div>
+              <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
 
-          <button
-            class="scan-option-card"
-            style="opacity:.6"
-            (click)="goToManualForm()"
-          >
-            <div class="scan-option-icon" style="background:var(--glass-bg);border-color:var(--glass-border)">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-            </div>
-            <div class="scan-option-text">
-              <strong>Inserimento manuale</strong>
-              <span>Compila il modulo a mano</span>
-            </div>
-          </button>
+          <div class="stagger" [style.--i]="2">
+            <button class="card" style="opacity:.65" (click)="goToManualForm()">
+              <span class="card-ico" style="background:var(--glass);border-color:var(--glass-border)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </span>
+              <div class="card-info">
+                <span class="card-name">Inserimento manuale</span>
+                <span class="card-desc">Compila il modulo a mano</span>
+              </div>
+              <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
         </div>
       }
 
       @if (state() === 'requesting-permission' || state() === 'scanning' || state() === 'processing') {
-        <div style="
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 60px 20px;
-          gap: 20px;
-        ">
-          <div style="
-            width: 52px; height: 52px;
-            border: 3px solid var(--glass-border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin .8s linear infinite;
-          "></div>
-          <p style="color:var(--text-secondary);text-align:center">{{ loadingMessage() }}</p>
+        <div class="center">
+          <span class="spinner"></span>
+          <p class="loading-msg">{{ loadingMessage() }}</p>
         </div>
       }
 
       @if (state() === 'error') {
-        <div style="
-          padding: 20px;
-          background: rgba(255,77,109,.08);
-          border: 1px solid rgba(255,77,109,.25);
-          border-radius: var(--radius-md);
-          text-align: center;
-        ">
-          <p style="color:var(--color-overdue);margin-bottom:16px;font-size:.9rem">{{ errorMessage() }}</p>
-          <div style="display:flex;gap:8px">
-            <button
-              style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-secondary);cursor:pointer"
-              (click)="reset()"
-            >Riprova</button>
-            <button
-              style="flex:1;padding:10px;border-radius:var(--radius-sm);background:var(--accent-light);border:1px solid rgba(108,99,255,.3);color:var(--accent);cursor:pointer"
-              (click)="goToManualForm()"
-            >Manuale</button>
+        <div class="err-box">
+          <p class="err-msg">{{ errorMessage() }}</p>
+          <div class="err-actions">
+            <button class="btn-sec" (click)="reset()">Riprova</button>
+            <button class="btn-acc" (click)="goToManualForm()">Manuale</button>
           </div>
         </div>
       }
     </div>
   `,
+  styles: [`
+    :host { display: block; }
+    .screen { padding-bottom: 100px; animation: scadit-fadeIn 280ms ease both; }
+    .header { padding: 8px 20px 20px; }
+    .title { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+    .sub { font-size: 13px; color: var(--text-secondary); margin: 4px 0 0; }
+    .cards { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+    .stagger { opacity: 0; animation: scadit-slideUp 420ms cubic-bezier(0.2,0.8,0.2,1) forwards; animation-delay: calc(var(--i,0) * 80ms + 50ms); }
+    .card { width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: var(--radius); background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(20px) saturate(140%); cursor: pointer; text-align: left; font-family: inherit; color: var(--text-primary); transition: opacity 150ms ease; }
+    .card:active { opacity: 0.75; }
+    .card-ico { width: 52px; height: 52px; border-radius: 15px; border: 1px solid; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .card-info { flex: 1; min-width: 0; }
+    .card-name { display: block; font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .card-desc { display: block; font-size: 12px; color: var(--text-secondary); }
+    .chev { color: var(--text-tertiary); flex-shrink: 0; }
+    .center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 20px; }
+    .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--glass-border); border-top-color: var(--accent); animation: scadit-spin 700ms linear infinite; }
+    .loading-msg { color: var(--text-secondary); font-size: 14px; text-align: center; }
+    .err-box { margin: 16px; padding: 20px; background: rgba(255,71,87,0.07); border: 1px solid rgba(255,71,87,0.25); border-radius: var(--radius); text-align: center; }
+    .err-msg { color: var(--danger); font-size: 13.5px; margin-bottom: 16px; line-height: 1.5; }
+    .err-actions { display: flex; gap: 10px; }
+    .btn-sec { flex: 1; padding: 12px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; }
+    .btn-acc { flex: 1; padding: 12px; border-radius: 12px; background: var(--accent-grad); border: none; color: white; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; }
+  `],
 })
 export class ScanComponent {
   private readonly router      = inject(Router);
   private readonly cbillParser = inject(CbillParserService);
   private readonly ocrParser   = inject(OcrParserService);
 
-  readonly state         = signal<ScanState>('idle');
-  readonly errorMessage  = signal('');
+  readonly state          = signal<ScanState>('idle');
+  readonly errorMessage   = signal('');
   readonly loadingMessage = signal('');
 
   async startQrScan(): Promise<void> {
@@ -176,7 +181,6 @@ export class ScanComponent {
       this.state.set('processing');
       this.loadingMessage.set('Estrazione testo in corso…');
 
-      // TODO: integrare ML Kit Text Recognition quando disponibile
       this.navigateToForm({ notes: `Foto acquisita: ${photo.webPath ?? photo.path}` });
     } catch (err) {
       const msg = (err as Error).message ?? '';

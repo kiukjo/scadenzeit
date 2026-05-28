@@ -15,112 +15,100 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
   selector: 'app-document-upload',
   imports: [PremiumGateComponent],
   template: `
-    <div class="document-form-page">
-      <header class="page-header">
-        <button class="back-btn" (click)="goBack()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-          Indietro
-        </button>
-        <h1>Aggiungi documento</h1>
-      </header>
+    <div class="page">
+      <div class="backdrop" (click)="goBack()"></div>
+      <div class="sheet">
+        <div class="drag-handle"></div>
 
-      @if (isAtLimit()) {
-        <app-premium-gate type="documents" />
-
-      } @else if (state() === 'idle') {
-
-        <div class="form-card">
-          <div class="form-group">
-            <label>Nome documento *</label>
-            <input
-              class="input"
-              type="text"
-              [value]="filename()"
-              (input)="filename.set($any($event.target).value)"
-              placeholder="es. Carta d'identità, Patente…"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Note — opzionale</label>
-            <input
-              class="input"
-              type="text"
-              [value]="notes()"
-              (input)="notes.set($any($event.target).value)"
-              placeholder="es. Scade il 01/01/2030"
-            />
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <button
-              style="
-                padding:14px 10px;
-                border-radius:var(--radius-md);
-                background:var(--accent-light);
-                border:1px solid rgba(108,99,255,.25);
-                color:var(--text-primary);
-                font-size:.9rem;
-                font-weight:600;
-                cursor:pointer;
-                display:flex;flex-direction:column;align-items:center;gap:8px;
-                transition:all .15s;
-              "
-              [disabled]="!filename().trim()"
-              (click)="capture(cameraSource.Camera)"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-              Scatta foto
-            </button>
-
-            <button
-              style="
-                padding:14px 10px;
-                border-radius:var(--radius-md);
-                background:var(--glass-bg);
-                border:1px solid var(--glass-border);
-                color:var(--text-secondary);
-                font-size:.9rem;
-                font-weight:600;
-                cursor:pointer;
-                display:flex;flex-direction:column;align-items:center;gap:8px;
-                transition:all .15s;
-              "
-              [disabled]="!filename().trim()"
-              (click)="capture(cameraSource.Photos)"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-              Dalla galleria
-            </button>
-          </div>
+        <!-- Header -->
+        <div class="hdr">
+          <button class="back-btn" type="button" (click)="goBack()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <h2 class="hdr-title">Aggiungi documento</h2>
+          <span style="width:32px"></span>
         </div>
 
-      } @else if (state() === 'error') {
-        <div style="padding:20px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.25);border-radius:var(--radius-md);text-align:center">
-          <p style="color:var(--color-overdue);margin-bottom:16px;font-size:.9rem">{{ errorMessage() }}</p>
-          <button
-            style="padding:10px 24px;border-radius:var(--radius-full);background:var(--glass-bg);border:1px solid var(--glass-border);color:var(--text-secondary);cursor:pointer"
-            (click)="state.set('idle')"
-          >Riprova</button>
-        </div>
+        <div class="body">
 
-      } @else {
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:20px">
-          <div style="width:48px;height:48px;border:3px solid var(--glass-border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div>
-          <p style="color:var(--text-secondary)">{{ stateLabel() }}</p>
+          @if (isAtLimit()) {
+            <app-premium-gate type="documents" />
+
+          } @else if (state() === 'idle') {
+
+            <div class="sec-label">Nome documento *</div>
+            <div class="field">
+              <input class="inp" type="text" placeholder="es. Carta d'identità, Patente…"
+                [value]="filename()" (input)="filename.set($any($event.target).value)" />
+            </div>
+
+            <div class="sec-label">Note — opzionale</div>
+            <div class="field">
+              <input class="inp" type="text" placeholder="es. Scade il 01/01/2030"
+                [value]="notes()" (input)="notes.set($any($event.target).value)" />
+            </div>
+
+            <div class="capture-row">
+              <button class="capture-btn accent" [disabled]="!filename().trim()" (click)="capture(cameraSource.Camera)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                  <circle cx="12" cy="13" r="4"/>
+                </svg>
+                Scatta foto
+              </button>
+              <button class="capture-btn ghost" [disabled]="!filename().trim()" (click)="capture(cameraSource.Photos)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                Dalla galleria
+              </button>
+            </div>
+
+          } @else if (state() === 'error') {
+            <div class="err-box">
+              <p class="err-msg">{{ errorMessage() }}</p>
+              <button class="btn-retry" type="button" (click)="state.set('idle')">Riprova</button>
+            </div>
+
+          } @else {
+            <div class="loading-state">
+              <span class="spinner"></span>
+              <p class="loading-msg">{{ stateLabel() }}</p>
+            </div>
+          }
+
         </div>
-      }
+      </div>
     </div>
   `,
+  styles: [`
+    :host { display: block; }
+    .page { position: fixed; inset: 0; z-index: 200; display: flex; flex-direction: column; justify-content: flex-end; }
+    .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); }
+    .sheet { position: relative; z-index: 1; background: var(--modal-bg); border-radius: 28px 28px 0 0; max-height: 90dvh; display: flex; flex-direction: column; animation: scadit-slideUpModal 380ms cubic-bezier(0.2,0.8,0.2,1) both; }
+    .drag-handle { width: 40px; height: 4px; background: var(--glass-border); border-radius: 4px; margin: 12px auto 0; flex-shrink: 0; }
+    .hdr { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 10px; flex-shrink: 0; }
+    .back-btn { width: 32px; height: 32px; border-radius: 10px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary); }
+    .hdr-title { font-size: 17px; font-weight: 700; }
+    .body { overflow-y: auto; padding: 8px 20px 48px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .sec-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-tertiary); margin-top: 12px; }
+    .field { border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); overflow: hidden; }
+    .field:focus-within { border-color: rgba(108,99,255,0.65); box-shadow: 0 0 0 3px rgba(108,99,255,0.12); }
+    .inp { width: 100%; min-width: 0; box-sizing: border-box; padding: 14px; background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 15px; font-family: inherit; caret-color: var(--accent); }
+    .capture-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+    .capture-btn { padding: 18px 10px; border-radius: 16px; border: 1px solid; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; font-family: inherit; transition: opacity 150ms ease; }
+    .capture-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .capture-btn.accent { background: rgba(108,99,255,0.10); border-color: rgba(108,99,255,0.30); color: var(--accent); }
+    .capture-btn.ghost { background: var(--glass); border-color: var(--glass-border); color: var(--text-secondary); }
+    .err-box { padding: 20px; background: rgba(255,71,87,0.07); border: 1px solid rgba(255,71,87,0.25); border-radius: var(--radius); text-align: center; margin-top: 8px; }
+    .err-msg { color: var(--danger); font-size: 13.5px; margin-bottom: 14px; line-height: 1.5; }
+    .btn-retry { padding: 10px 24px; border-radius: 100px; background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
+    .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 18px; }
+    .spinner { width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--glass-border); border-top-color: var(--accent); animation: scadit-spin 700ms linear infinite; }
+    .loading-msg { color: var(--text-secondary); font-size: 14px; }
+  `],
 })
 export class DocumentUploadComponent {
   private readonly documentService = inject(DocumentService);
@@ -176,15 +164,8 @@ export class DocumentUploadComponent {
         toDirectory: Directory.Data,
       });
 
-      const { uri } = await Filesystem.getUri({
-        path: destName,
-        directory: Directory.Data,
-      });
-
-      const stat = await Filesystem.stat({
-        path: destName,
-        directory: Directory.Data,
-      });
+      const { uri } = await Filesystem.getUri({ path: destName, directory: Directory.Data });
+      const stat    = await Filesystem.stat({ path: destName, directory: Directory.Data });
 
       const doc = DocumentService.build({
         filename:  this.filename().trim(),
@@ -194,9 +175,9 @@ export class DocumentUploadComponent {
         notes:     this.notes().trim() || undefined,
       });
 
-      const docId = await this.documentService.add(doc);
-
+      const docId  = await this.documentService.add(doc);
       const userId = this.authService.user()?.id;
+
       if (userId && photo.webPath) {
         try {
           this.state.set('uploading');
