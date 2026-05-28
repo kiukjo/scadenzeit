@@ -7,6 +7,7 @@ import { DeadlineService } from './core/services/deadline.service';
 import { NotificationSchedulerService } from './core/services/notification-scheduler.service';
 import { SupabaseAuthService } from './core/services/supabase-auth.service';
 import { SyncService } from './core/services/sync.service';
+import { ThemeService } from './core/services/theme.service';
 import { NavComponent } from './shared/components/nav.component';
 
 @Component({
@@ -26,6 +27,8 @@ export class App implements OnInit {
   private readonly authService     = inject(SupabaseAuthService);
   private readonly syncService     = inject(SyncService);
   private readonly router          = inject(Router);
+  // ThemeService si auto-inizializza (applica data-theme all'avvio)
+  private readonly _theme          = inject(ThemeService);
 
   // URL corrente come Signal — usato per decidere se mostrare la nav
   private readonly currentUrl = toSignal(

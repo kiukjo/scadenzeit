@@ -62,12 +62,12 @@ export class SupabaseAuthService {
    * Se corretto, la sessione viene impostata automaticamente via onAuthStateChange.
    */
   async verifyOtp(email: string, token: string): Promise<void> {
-    const { error } = await this.sb.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    });
-    if (error) throw error;
+    // Prova prima 'email' (utente esistente) poi 'signup' (primo accesso)
+    const { error: emailErr } = await this.sb.auth.verifyOtp({ email, token, type: 'email' });
+    if (!emailErr) return;
+
+    const { error: signupErr } = await this.sb.auth.verifyOtp({ email, token, type: 'signup' });
+    if (signupErr) throw signupErr;
   }
 
   async signOut(): Promise<void> {
