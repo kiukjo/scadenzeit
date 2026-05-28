@@ -46,3 +46,19 @@ Thumbs.db
 # Credenziali Supabase — NON committare mai questi file
 src/environments/environment.ts
 src/environments/environment.development.ts
+
+# Credenziali e dati sensibili locali
+Accessi/
+*.txt
+!README.txt
+
+# File di design / documentazione locale (non codice sorgente)
+ScadenzeIt/
+design_handoff*/
+*.odt
+*.ods
+*.zip
+
+# Log di build locali
+build-log.txt
+*.log
