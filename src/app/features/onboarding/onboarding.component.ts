@@ -16,9 +16,10 @@ interface ProfileOption {
 }
 
 const PROFILE_OPTIONS: ProfileOption[] = [
-  { type: 'dipendente',        label: 'Lavoratore dipendente', description: '730, CU, esenzioni fiscali, documenti personali',     icon: '💼', color: '#6C63FF' },
-  { type: 'autonomo',          label: 'Autonomo / Partita IVA', description: 'IVA trimestrale, INPS, INAIL, albo professionale',    icon: '🧾', color: '#3B82F6' },
-  { type: 'proprietario_casa', label: 'Proprietario di casa',   description: 'IMU, TARI, cedolare secca, caldaia, condominio',      icon: '🏠', color: '#2ED573' },
+  { type: 'dipendente',        label: 'Lavoratore dipendente', description: '730, CU, esenzioni fiscali, documenti personali',          icon: '💼', color: '#6C63FF' },
+  { type: 'autonomo',          label: 'Autonomo / Partita IVA', description: 'IVA trimestrale, INPS, INAIL, albo professionale',         icon: '🧾', color: '#3B82F6' },
+  { type: 'proprietario_casa', label: 'Proprietario di casa',   description: 'IMU, TARI, cedolare secca, caldaia, condominio',           icon: '🏠', color: '#2ED573' },
+  { type: 'genitore',          label: 'Genitore / Famiglia',    description: 'Iscrizioni scuola, assegno unico, mensa, bonus nido INPS', icon: '👨‍👩‍👧', color: '#A29BFE' },
 ];
 
 @Component({

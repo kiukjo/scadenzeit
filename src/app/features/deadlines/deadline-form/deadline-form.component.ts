@@ -15,11 +15,12 @@ interface CategoryOpt { value: DeadlineCategory; label: string; icon: string; }
 
 const CATEGORIES: CategoryOpt[] = [
   { value: 'fisco',     label: 'Fisco',      icon: 'shield' },
+  { value: 'lavoro',    label: 'Lavoro',     icon: 'book'   },
+  { value: 'famiglia',  label: 'Famiglia',   icon: 'heart'  },
+  { value: 'casa',      label: 'Casa',       icon: 'home'   },
   { value: 'veicoli',   label: 'Veicoli',    icon: 'car'    },
   { value: 'sanita',    label: 'Salute',     icon: 'alarm'  },
   { value: 'documenti', label: 'Documenti',  icon: 'idCard' },
-  { value: 'casa',      label: 'Casa',       icon: 'home'   },
-  { value: 'lavoro',    label: 'Lavoro',     icon: 'book'   },
 ];
 
 const RECURRENCES: { value: DeadlineRecurrence; label: string }[] = [

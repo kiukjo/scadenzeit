@@ -1,7 +1,8 @@
 export type UserProfileType =
   | 'dipendente'
   | 'autonomo'
-  | 'proprietario_casa';
+  | 'proprietario_casa'
+  | 'genitore';
 
 export interface UserProfile {
   supabaseId?: string;

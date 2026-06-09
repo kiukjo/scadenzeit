@@ -4,7 +4,8 @@ export type DeadlineCategory =
   | 'sanita'
   | 'documenti'
   | 'casa'
-  | 'lavoro';
+  | 'lavoro'
+  | 'famiglia';
 
 export type DeadlineRecurrence =
   | 'once'      // una tantum
