@@ -19,7 +19,6 @@ const CATEGORIES: CategoryOpt[] = [
   { value: 'famiglia',  label: 'Famiglia',   icon: 'heart'  },
   { value: 'casa',      label: 'Casa',       icon: 'home'   },
   { value: 'veicoli',   label: 'Veicoli',    icon: 'car'    },
-  { value: 'sanita',    label: 'Salute',     icon: 'alarm'  },
   { value: 'documenti', label: 'Documenti',  icon: 'idCard' },
 ];
 

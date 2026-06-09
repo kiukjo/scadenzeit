@@ -10,7 +10,7 @@ import { Deadline, DeadlineCategory } from '../../core/models';
 type TabKey = 'auto' | 'veicoli' | 'manuali';
 type UrgencyColor = '#FF4757' | '#FFA502' | '#2ED573';
 
-const CATEGORY_ORDER: DeadlineCategory[] = ['fisco','lavoro','famiglia','casa','veicoli','sanita','documenti'];
+const CATEGORY_ORDER: DeadlineCategory[] = ['fisco','lavoro','famiglia','casa','veicoli','documenti','sanita'];
 const CAT_META: Record<string, { icon: string; label: string; color: string }> = {
   fisco:     { icon: 'shield',   label: 'Fisco & Tasse',  color: '#6C63FF' },
   lavoro:    { icon: 'book',     label: 'Lavoro',         color: '#3B82F6' },

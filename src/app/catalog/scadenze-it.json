@@ -260,41 +260,12 @@
     "notes": "Verificare la data di scadenza dell'offerta dalla bolletta e aggiungere manualmente"
   },
   {
-    "id": "esenzione_ticket",
-    "name": "Esenzione ticket sanitario",
-    "category": "sanita",
-    "recurrence": "yearly",
-    "month": 12,
-    "day": 31,
-    "reminders": [30, 15],
-    "appliesTo": ["dipendente", "autonomo", "genitore"],
-    "notes": "L'esenzione per reddito va rinnovata ogni anno con autocertificazione al medico di base"
-  },
-  {
-    "id": "visita_medica_lavoro",
-    "name": "Visita medica del lavoro",
-    "category": "sanita",
-    "recurrence": "variable",
-    "reminders": [30, 15, 7],
-    "appliesTo": ["dipendente"],
-    "notes": "Sorveglianza sanitaria obbligatoria — la periodicità è definita dal medico competente aziendale. Aggiungere la data specifica"
-  },
-  {
-    "id": "tessera_sanitaria",
-    "name": "Tessera Sanitaria / Codice Fiscale",
-    "category": "sanita",
-    "recurrence": "variable",
-    "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Valida 6 anni — rinnovata automaticamente dall'Agenzia delle Entrate. Aggiungere la data di scadenza riportata sulla tessera"
-  },
-  {
     "id": "carta_identita",
     "name": "Carta d'identità",
     "category": "documenti",
     "recurrence": "variable",
     "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
     "notes": "Valida 10 anni (adulti), 5 anni (3-18 anni), 3 anni (under 3). Rinnovo in Comune o online"
   },
   {
@@ -303,7 +274,7 @@
     "category": "documenti",
     "recurrence": "variable",
     "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
     "notes": "Valido 10 anni (adulti). Richiesta online su Polizia di Stato o in Questura"
   },
   {
@@ -321,8 +292,17 @@
     "category": "documenti",
     "recurrence": "variable",
     "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
     "notes": "10 anni (under 50), 5 anni (50-70), 3 anni (over 70). Rinnovo in motorizzazione o online"
+  },
+  {
+    "id": "tessera_sanitaria",
+    "name": "Tessera Sanitaria / Codice Fiscale",
+    "category": "documenti",
+    "recurrence": "variable",
+    "reminders": [180, 90, 30],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
+    "notes": "Valida 6 anni — rinnovata automaticamente dall'Agenzia delle Entrate. Aggiungere la data di scadenza riportata sulla tessera"
   },
   {
     "id": "cu_certificazione_unica",
@@ -443,23 +423,5 @@
     "reminders": [60, 30, 15],
     "appliesTo": ["genitore"],
     "notes": "Domanda INPS per il contributo sulle rette dell'asilo nido (fino a €3.000/anno in base all'ISEE). Presentare la domanda entro il 31 dicembre dell'anno di riferimento"
-  },
-  {
-    "id": "vaccinazioni_bambini",
-    "name": "Vaccinazioni obbligatorie bambini",
-    "category": "famiglia",
-    "recurrence": "variable",
-    "reminders": [60, 30, 15],
-    "appliesTo": ["genitore"],
-    "notes": "Calendario vaccinale obbligatorio — inserire la data del prossimo richiamo indicata dal pediatra. Obbligatorie per iscrizione a nido e scuola dell'infanzia"
-  },
-  {
-    "id": "visita_pediatrica",
-    "name": "Visita pediatrica annuale",
-    "category": "famiglia",
-    "recurrence": "variable",
-    "reminders": [30, 15],
-    "appliesTo": ["genitore"],
-    "notes": "Bilancio di salute annuale con il pediatra di base — inserire la data concordata"
   }
 ]
