@@ -38,6 +38,9 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       <p class="sub">{{ todayLabel() }}</p>
     </div>
     <div class="hdr-actions">
+      <button class="bell" type="button" (click)="toggleSearch()" aria-label="Cerca">
+        <app-icon name="search" [size]="17" />
+      </button>
       <button class="bell" type="button" (click)="router.navigate(['/dashboard'])" aria-label="Riepilogo">
         <app-icon name="chart" [size]="17" />
       </button>
@@ -48,37 +51,51 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     </div>
   </header>
 
-  <!-- ── Stats strip ── -->
-  <div class="stats">
-    <div class="stat" [class.danger]="overdueCount() > 0">
-      <span class="stat-n">{{ overdueCount() }}</span>
-      <span class="stat-l">scadute</span>
+  <!-- ── Barra di ricerca ── -->
+  @if (searchOpen()) {
+    <div class="searchbar">
+      <app-icon name="search" [size]="16" color="var(--text-tertiary)" />
+      <input type="text" placeholder="Cerca tra le scadenze…" inputmode="search"
+        [value]="query()" (input)="query.set($any($event.target).value)" />
+      <button class="sb-close" (click)="toggleSearch()" aria-label="Chiudi ricerca">
+        <app-icon name="close" [size]="15" [strokeWidth]="2.2" />
+      </button>
     </div>
-    <div class="stat-sep"></div>
-    <div class="stat" [class.warn]="urgentCount() > 0">
-      <span class="stat-n">{{ urgentCount() }}</span>
-      <span class="stat-l">urgenti</span>
-    </div>
-    <div class="stat-sep"></div>
-    <div class="stat">
-      <span class="stat-n">{{ totalCount() }}</span>
-      <span class="stat-l">totali</span>
-    </div>
-  </div>
+  }
 
-  <!-- ── Next-up banner ── -->
-  @if (nextUp(); as n) {
-    <div class="bwrap">
-      <div class="banner">
-        <div class="bico"><app-icon name="calendar" [size]="18"/></div>
-        <div class="bbody">
-          <div class="blbl">Prossima scadenza</div>
-          <div class="bname">{{ n.name }}</div>
-          <div class="bdays">fra {{ n.days }} {{ n.days === 1 ? 'giorno' : 'giorni' }}</div>
-        </div>
-        @if (n.amount) { <div class="bamt">€{{ n.amount }}</div> }
+  @if (!searchOpen()) {
+    <!-- ── Stats strip ── -->
+    <div class="stats">
+      <div class="stat" [class.danger]="overdueCount() > 0">
+        <span class="stat-n">{{ overdueCount() }}</span>
+        <span class="stat-l">scadute</span>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat" [class.warn]="urgentCount() > 0">
+        <span class="stat-n">{{ urgentCount() }}</span>
+        <span class="stat-l">urgenti</span>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat">
+        <span class="stat-n">{{ totalCount() }}</span>
+        <span class="stat-l">totali</span>
       </div>
     </div>
+
+    <!-- ── Next-up banner ── -->
+    @if (nextUp(); as n) {
+      <div class="bwrap">
+        <div class="banner">
+          <div class="bico"><app-icon name="calendar" [size]="18"/></div>
+          <div class="bbody">
+            <div class="blbl">Prossima scadenza</div>
+            <div class="bname">{{ n.name }}</div>
+            <div class="bdays">fra {{ n.days }} {{ n.days === 1 ? 'giorno' : 'giorni' }}</div>
+          </div>
+          @if (n.amount) { <div class="bamt">€{{ n.amount }}</div> }
+        </div>
+      </div>
+    }
   }
 
   <!-- ── Tab bar ── -->
@@ -202,6 +219,9 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     .greeting{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0}
     .sub{font-size:13px;color:var(--text-secondary);margin:2px 0 0;text-transform:capitalize}
     .hdr-actions{display:flex;align-items:center;gap:8px}
+    .searchbar{display:flex;align-items:center;gap:8px;margin:0 16px 14px;padding:0 12px;height:44px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-border);animation:scadit-slideUp 240ms cubic-bezier(.2,.8,.2,1) both}
+    .searchbar input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--text-primary);font-size:14.5px;font-family:inherit;caret-color:var(--accent)}
+    .sb-close{width:26px;height:26px;border-radius:13px;border:none;background:var(--glass-border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);flex-shrink:0}
     .bell{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;color:var(--text-primary)}
     .bell-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:4px;background:var(--danger);box-shadow:0 0 6px var(--danger);animation:scadit-badgePulse 1.6s ease-in-out infinite}
     .stats{display:flex;align-items:center;padding:0 20px 16px}
@@ -264,8 +284,10 @@ export class DeadlinesComponent {
   private readonly notifScheduler  = inject(NotificationSchedulerService);
   private readonly toast           = inject(ToastService);
 
-  readonly swipedId  = signal<number | null>(null);
-  readonly activeTab = signal<TabKey>('auto');
+  readonly swipedId   = signal<number | null>(null);
+  readonly activeTab  = signal<TabKey>('auto');
+  readonly searchOpen = signal(false);
+  readonly query      = signal('');
   private readonly today = new Date();
 
   // ── Tab config ───────────────────────────────────────────────
@@ -287,19 +309,28 @@ export class DeadlinesComponent {
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
   );
 
+  /** Filtra per testo di ricerca (nome o note) */
+  private filterQuery(list: Deadline[]): Deadline[] {
+    const q = this.query().trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(d =>
+      d.customName.toLowerCase().includes(q) || (d.notes ?? '').toLowerCase().includes(q),
+    );
+  }
+
   /** Importate da catalogo, non legate a veicolo */
   readonly autoList = computed(() =>
-    this.allActive().filter(d => d.catalogId != null && d.vehicleId == null),
+    this.filterQuery(this.allActive().filter(d => d.catalogId != null && d.vehicleId == null)),
   );
 
   /** Legate a un veicolo (bollo, revisione, assicurazione) */
   readonly vehicleList = computed(() =>
-    this.allActive().filter(d => d.vehicleId != null),
+    this.filterQuery(this.allActive().filter(d => d.vehicleId != null)),
   );
 
   /** Create manualmente (nessun catalogId, nessun vehicleId) */
   readonly manualList = computed(() =>
-    this.allActive().filter(d => d.catalogId == null && d.vehicleId == null),
+    this.filterQuery(this.allActive().filter(d => d.catalogId == null && d.vehicleId == null)),
   );
 
   // ── Raggruppamenti ───────────────────────────────────────────
@@ -390,6 +421,12 @@ export class DeadlinesComponent {
   setTab(t: TabKey): void {
     this.activeTab.set(t);
     this.swipedId.set(null);
+  }
+
+  toggleSearch(): void {
+    const open = !this.searchOpen();
+    this.searchOpen.set(open);
+    if (!open) this.query.set('');
   }
 
   toggleSwipe(id: number | undefined): void {

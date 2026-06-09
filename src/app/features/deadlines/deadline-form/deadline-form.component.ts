@@ -6,6 +6,7 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { DeadlineFormService } from '../../../core/services/deadline-form.service';
 import { NotificationSchedulerService } from '../../../core/services/notification-scheduler.service';
 import { DeadlineCategory, DeadlineRecurrence } from '../../../core/models';
+import { portaleFor } from '../../../core/constants/portali';
 import { IconComponent } from '../../../shared/components/icon.component';
 
 interface CategoryOpt { value: DeadlineCategory; label: string; icon: string; }
@@ -51,6 +52,18 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
         </header>
 
           <div class="body">
+
+            <!-- Link al portale ufficiale -->
+            @if (portale(); as p) {
+              <button type="button" class="portal-link" (click)="openPortale(p.url)">
+                <span class="portal-ico"><app-icon name="globe" [size]="16" color="#6C63FF"/></span>
+                <span class="portal-txt">
+                  <span class="portal-lbl">Portale ufficiale</span>
+                  <span class="portal-name">{{ p.label }}</span>
+                </span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </button>
+            }
 
             <!-- Preset banner -->
             @if (preset()) {
@@ -274,6 +287,22 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
       font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px;
       text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; padding-left: 2px;
     }
+    .portal-link {
+      width: 100%; display: flex; align-items: center; gap: 11px;
+      padding: 12px 14px; border-radius: 14px; margin-bottom: 16px; cursor: pointer;
+      background: linear-gradient(135deg, rgba(108,99,255,0.12), rgba(59,130,246,0.06));
+      border: 1px solid rgba(108,99,255,0.28); color: var(--text-primary);
+      font-family: inherit; text-align: left;
+    }
+    .portal-ico {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(108,99,255,0.14); border: 1px solid rgba(108,99,255,0.30);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .portal-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .portal-lbl { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--text-tertiary); }
+    .portal-name { font-size: 13.5px; font-weight: 600; margin-top: 1px; }
+    .portal-link > svg { color: var(--accent); flex-shrink: 0; }
     .preset-banner {
       display: flex; align-items: center; gap: 8px;
       padding: 10px 14px; border-radius: 12px; margin-bottom: 16px;
@@ -442,8 +471,8 @@ export class DeadlineFormComponent {
   readonly editId     = signal<number | null>(null);
   readonly isEditMode = computed(() => this.editId() !== null);
 
-  /** catalogId ereditato da una voce di catalogo a data variabile (create mode) */
-  private draftCatalogId: string | undefined;
+  /** catalogId corrente: ereditato dal catalogo (create) o dalla scadenza caricata (edit) */
+  readonly currentCatalogId = signal<string | undefined>(undefined);
 
   // ── Form state ────────────────────────────────────────────────
   readonly name         = signal('');
@@ -494,7 +523,7 @@ export class DeadlineFormComponent {
       if (draft.category)   this.category.set(draft.category);
       if (draft.recurrence) this.recurrence.set(draft.recurrence);
       if (draft.notes)      this.notes.set(draft.notes);
-      if (draft.catalogId)  this.draftCatalogId = draft.catalogId;
+      if (draft.catalogId)  this.currentCatalogId.set(draft.catalogId);
       if (draft.dueDate) {
         const d = draft.dueDate instanceof Date ? draft.dueDate : new Date(draft.dueDate);
         if (!isNaN(d.getTime())) {
@@ -511,6 +540,7 @@ export class DeadlineFormComponent {
   private async loadDeadline(id: number): Promise<void> {
     const d = await this.deadlineService.getById(id);
     if (!d) return;
+    this.currentCatalogId.set(d.catalogId);
     this.name.set(d.customName);
     this.category.set(d.category);
     this.recurrence.set(d.recurrence);
@@ -528,6 +558,13 @@ export class DeadlineFormComponent {
   // ── Derived ───────────────────────────────────────────────────
 
   readonly preset = computed(() => this.formService.suggestPreset(this.name()));
+
+  /** Portale ufficiale collegato (Agenzia Entrate, INPS, ACI…) */
+  readonly portale = computed(() => portaleFor(this.currentCatalogId(), this.category()));
+
+  openPortale(url: string): void {
+    window.open(url, '_blank', 'noopener');
+  }
 
   readonly amountCents = computed(() => {
     const val = parseFloat(this.amountStr().replace(',', '.'));
@@ -655,7 +692,7 @@ export class DeadlineFormComponent {
         const deadline = DeadlineService.build({
           ...changes,
           completed: false,
-          catalogId: this.draftCatalogId,
+          catalogId: this.currentCatalogId(),
         });
         const id    = await this.deadlineService.add(deadline);
         const saved = await this.deadlineService.getById(id);
