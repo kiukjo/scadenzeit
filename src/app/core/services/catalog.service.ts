@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { addYears, isPast } from 'date-fns';
+import { addMonths, addYears, isPast } from 'date-fns';
 import catalogData from '../../catalog/scadenze-it.json';
 import { CatalogDeadline, Deadline, DeadlineCategory, UserProfileType } from '../models';
 
@@ -27,12 +27,35 @@ export class CatalogService {
   }
 
   /**
-   * Calcola la prossima data di scadenza per voci con month/day fissi.
-   * Se la data di quest'anno è già passata restituisce quella dell'anno prossimo.
-   * Restituisce null per voci "variable" che richiedono input utente.
+   * Restituisce le voci con data fissa da importare automaticamente in onboarding.
+   * Incluse: yearly/biennial con month+day, monthly con day.
+   * Escluse: variable, e qualunque entry senza day.
+   */
+  getAutoImportable(profileTypes: UserProfileType[]): CatalogDeadline[] {
+    return this.getByProfile(profileTypes).filter((e) => {
+      if (e.recurrence === 'variable') return false;
+      if (e.day == null) return false;
+      if (e.recurrence === 'monthly') return true;   // solo day richiesto
+      return e.month != null;                        // yearly/biennial: month+day
+    });
+  }
+
+  /**
+   * Calcola la prossima data di scadenza.
+   * - monthly: prossima occorrenza del giorno X
+   * - yearly:  ricorrenza annuale fissa (mese+giorno)
+   * - variable / senza date: restituisce null
    */
   computeNextDueDate(entry: CatalogDeadline): Date | null {
-    if (entry.month == null || entry.day == null) return null;
+    if (entry.day == null) return null;
+
+    if (entry.recurrence === 'monthly') {
+      const now = new Date();
+      const candidate = new Date(now.getFullYear(), now.getMonth(), entry.day);
+      return isPast(candidate) ? addMonths(candidate, 1) : candidate;
+    }
+
+    if (entry.month == null) return null;
 
     const candidate = new Date(new Date().getFullYear(), entry.month - 1, entry.day);
     return isPast(candidate) ? addYears(candidate, 1) : candidate;
@@ -44,14 +67,14 @@ export class CatalogService {
    */
   toDraft(entry: CatalogDeadline): Omit<Deadline, 'id' | 'uuid' | 'updatedAt'> {
     return {
-      catalogId: entry.id,
+      catalogId:  entry.id,
       customName: entry.name,
-      category: entry.category,
-      dueDate: this.computeNextDueDate(entry) ?? new Date(),
-      reminders: [...entry.reminders],
+      category:   entry.category,
+      dueDate:    this.computeNextDueDate(entry) ?? new Date(),
+      reminders:  [...entry.reminders],
       recurrence: entry.recurrence,
-      completed: false,
-      notes: entry.notes,
+      completed:  false,
+      notes:      entry.notes,
     };
   }
 }

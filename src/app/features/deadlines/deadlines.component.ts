@@ -5,155 +5,137 @@ import { VehicleService } from '../../core/services/vehicle.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { NotificationSchedulerService } from '../../core/services/notification-scheduler.service';
 import { IconComponent } from '../../shared/components/icon.component';
-import { Deadline } from '../../core/models';
+import { Deadline, DeadlineCategory } from '../../core/models';
 
 type UrgencyKey = 'overdue' | 'critical' | 'warning' | 'safe';
-interface Urgency { key: UrgencyKey; color: string; label: string; }
-type FilterKey = 'all' | UrgencyKey;
+interface Urgency { key: UrgencyKey; color: string; }
 
-const CATEGORY_ICON: Record<string, string> = {
-  veicoli:   'car',
-  fisco:     'shield',
-  documenti: 'idCard',
-  casa:      'home',
-  sanita:    'calendar',
-  lavoro:    'book',
-};
+const CATEGORY_ORDER: DeadlineCategory[] = ['fisco', 'lavoro', 'casa', 'veicoli', 'sanita', 'documenti'];
 
-const CATEGORY_LABEL: Record<string, string> = {
-  veicoli:   'Veicoli',
-  fisco:     'Fisco',
-  documenti: 'Documenti',
-  casa:      'Casa',
-  sanita:    'Sanità',
-  lavoro:    'Lavoro',
+const CAT_META: Record<string, { icon: string; label: string; color: string }> = {
+  fisco:     { icon: 'shield',   label: 'Fisco & Tasse', color: '#6C63FF' },
+  lavoro:    { icon: 'book',     label: 'Lavoro',        color: '#3B82F6' },
+  casa:      { icon: 'home',     label: 'Casa',          color: '#2ED573' },
+  veicoli:   { icon: 'car',      label: 'Veicoli',       color: '#FFA502' },
+  sanita:    { icon: 'calendar', label: 'Sanità',        color: '#FF6B81' },
+  documenti: { icon: 'idCard',   label: 'Documenti',     color: '#7BED9F' },
 };
 
 const IT_MONTHS_SHORT = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
 const IT_MONTHS_LONG  = ['gennaio','febbraio','marzo','aprile','maggio','giugno',
                           'luglio','agosto','settembre','ottobre','novembre','dicembre'];
-const IT_DAYS         = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+const IT_DAYS = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
 
 @Component({
   selector: 'app-deadlines',
   imports: [IconComponent],
   template: `
     <div class="screen">
-      <!-- ── Header ──────────────────────────────────────────────── -->
+
+      <!-- ── Header ── -->
       <header class="header">
         <div>
-          <h1 class="greeting">Ciao {{ userName() }} <span class="wave">👋</span></h1>
+          <h1 class="greeting">{{ userName() }} <span class="wave">👋</span></h1>
           <p class="sub">{{ todayLabel() }}</p>
         </div>
         <button class="bell" type="button" aria-label="Notifiche">
           <app-icon name="bell" [size]="17" />
-          @if (hasOverdue()) {
-            <span class="bell-dot"></span>
-          }
+          @if (hasOverdue()) { <span class="bell-dot"></span> }
         </button>
       </header>
 
-      <!-- ── Next-up banner ──────────────────────────────────────── -->
+      <!-- ── Stats strip ── -->
+      @if (catalogAll().length > 0) {
+        <div class="stats">
+          <div class="stat" [class.danger]="overdueCount() > 0">
+            <span class="stat-n">{{ overdueCount() }}</span>
+            <span class="stat-l">scadute</span>
+          </div>
+          <div class="stat-sep"></div>
+          <div class="stat" [class.warn]="criticalCount() > 0">
+            <span class="stat-n">{{ criticalCount() }}</span>
+            <span class="stat-l">urgenti</span>
+          </div>
+          <div class="stat-sep"></div>
+          <div class="stat">
+            <span class="stat-n">{{ catalogAll().length }}</span>
+            <span class="stat-l">totali</span>
+          </div>
+        </div>
+      }
+
+      <!-- ── Next-up banner ── -->
       @if (nextUp(); as next) {
         <div class="banner-wrap">
           <div class="banner">
-            <div class="banner-icon">
-              <app-icon name="calendar" [size]="20" />
-            </div>
+            <div class="banner-ico"><app-icon name="calendar" [size]="18" /></div>
             <div class="banner-body">
-              <div class="banner-label">Prossima scadenza</div>
-              <div class="banner-title">
-                {{ next.name }} — fra {{ next.days }} {{ next.days === 1 ? 'giorno' : 'giorni' }}
-              </div>
+              <div class="banner-lbl">Prossima scadenza</div>
+              <div class="banner-name">{{ next.name }}</div>
+              <div class="banner-days">fra {{ next.days }} {{ next.days === 1 ? 'giorno' : 'giorni' }}</div>
             </div>
-            @if (next.amountEur) {
-              <div class="banner-amount">€ {{ next.amountEur }}</div>
-            }
+            @if (next.amount) { <div class="banner-amt">€{{ next.amount }}</div> }
           </div>
         </div>
       }
 
-      <!-- ── Filter chips ────────────────────────────────────────── -->
-      <div class="chips" role="tablist">
-        @for (c of chips(); track c.key) {
-          <button type="button" role="tab"
-            class="chip"
-            [class.active]="filter() === c.key"
-            (click)="filter.set(c.key)">
-            @if (c.dot) {
-              <span class="chip-dot" [style.background]="c.dot" [style.box-shadow]="'0 0 6px ' + c.dot"></span>
-            }
-            {{ c.label }}
-            <span class="chip-count">{{ c.count }}</span>
-          </button>
-        }
-      </div>
-
-      <!-- ── Empty state ─────────────────────────────────────────── -->
-      @if (filtered().length === 0) {
+      <!-- ── Empty state ── -->
+      @if (catalogAll().length === 0) {
         <div class="empty">
-          <div class="empty-glow">
-            <span style="font-size:58px;line-height:1">🎉</span>
-          </div>
-          <div class="empty-title">
-            {{ filter() === 'all' ? 'Tutto in regola!' : 'Nessuna scadenza qui' }}
-          </div>
+          <span class="empty-emoji">📋</span>
+          <div class="empty-title">Nessuna scadenza importata</div>
           <div class="empty-sub">
-            {{ filter() === 'all'
-              ? 'Non hai scadenze in vista. Aggiungine una per non dimenticarla mai più.'
-              : 'Prova a cambiare il filtro.' }}
+            Le scadenze vengono importate automaticamente in base al profilo selezionato durante l'accesso.
           </div>
-          @if (filter() === 'all') {
-            <button class="primary-btn shimmer" type="button" (click)="openAdd()">
-              Aggiungi scadenza
-            </button>
-          }
         </div>
       }
 
-      <!-- ── Deadline cards ──────────────────────────────────────── -->
-      @if (filtered().length > 0) {
-        <div class="list">
-          @for (d of filtered(); track d.id; let i = $index) {
+      <!-- ── Category sections ── -->
+      @for (g of byCategory(); track g.cat; let gi = $index) {
+        <div class="section">
+
+          <!-- Section header -->
+          <div class="sec-hdr">
+            <span class="sec-ico"
+              [style.background]="g.color + '1A'"
+              [style.borderColor]="g.color + '40'">
+              <app-icon [name]="g.icon" [size]="14" [color]="g.color" />
+            </span>
+            <span class="sec-title">{{ g.label }}</span>
+            <span class="sec-count">{{ g.items.length }}</span>
+          </div>
+
+          <!-- Deadline cards -->
+          @for (d of g.items; track d.id; let i = $index) {
             <div class="swipe-row stagger"
-              [style.--i]="i"
+              [style.--i]="gi * 5 + i"
               [class.swiped]="swipedId() === d.id">
 
-              <!-- Trash action (revealed on swipe) -->
-              <div class="swipe-action" (click)="onDelete(d, $event)">
-                <app-icon name="trash" [size]="22" color="#fff" />
+              <div class="swipe-del" (click)="onDelete(d, $event)">
+                <app-icon name="trash" [size]="20" color="#fff" />
               </div>
 
-              <!-- Card -->
               <div class="card"
                 [class.pulse]="isUrgentPulse(d)"
-                [style.box-shadow]="'0 6px 22px ' + urgencyOf(d).color + '1F'"
                 (click)="toggleSwipe(d.id)">
-
-                <span class="urgency-bar"
-                  [style.background]="'linear-gradient(180deg,' + urgencyOf(d).color + ',' + urgencyOf(d).color + 'AA)'"
-                  [style.box-shadow]="'0 0 12px ' + urgencyOf(d).color + '80'">
+                <span class="u-bar"
+                  [style.background]="urgencyOf(d).color"
+                  [style.boxShadow]="'0 0 8px ' + urgencyOf(d).color + '80'">
                 </span>
-
-                <div class="card-icon">
-                  <app-icon [name]="iconOf(d)" [size]="22" />
+                <div class="c-body">
+                  <div class="c-name">{{ d.customName }}</div>
+                  <div class="c-date">{{ formatDate(d) }}</div>
+                  @if (vehicleLabel(d)) {
+                    <div class="c-vehicle">{{ vehicleLabel(d) }}</div>
+                  }
                 </div>
-
-                <div class="card-body">
-                  <div class="card-title">{{ d.customName }}</div>
-                  <div class="card-vehicle">{{ vehicleLabel(d) }}</div>
-                  <div class="card-date">{{ formatDate(d) }}</div>
-                </div>
-
-                <div class="card-right">
-                  <div class="days-wrap">
-                    <div class="days" [style.color]="urgencyOf(d).color">{{ absDays(d) }}</div>
-                    <div class="days-label" [style.color]="urgencyOf(d).color">
-                      {{ daysUntil(d) < 0 ? 'gg fa' : 'giorni' }}
-                    </div>
+                <div class="c-right">
+                  <div class="c-days" [style.color]="urgencyOf(d).color">{{ absDays(d) }}</div>
+                  <div class="c-label" [style.color]="urgencyOf(d).color">
+                    {{ daysUntil(d) < 0 ? 'fa' : 'gg' }}
                   </div>
                   @if (amountEur(d)) {
-                    <div class="amount">€ {{ amountEur(d) }}</div>
+                    <div class="c-amt">€{{ amountEur(d) }}</div>
                   }
                 </div>
               </div>
@@ -162,230 +144,63 @@ const IT_DAYS         = ['domenica','lunedì','martedì','mercoledì','giovedì'
         </div>
       }
 
-      <!-- ── FAB ─────────────────────────────────────────────────── -->
-      <button class="fab" type="button" aria-label="Aggiungi scadenza"
-        (click)="openAdd()">
-        <app-icon name="plus" [size]="26" color="#fff" [strokeWidth]="2.2" />
-      </button>
+      <!-- ── Footer ── -->
+      @if (catalogAll().length > 0) {
+        <p class="footer-note">
+          Scadenze importate automaticamente dal tuo profilo
+        </p>
+      }
+
     </div>
   `,
   styles: [`
     :host { display: block; position: relative; }
-
-    .screen {
-      padding-bottom: 100px;
-      animation: scadit-fadeIn 280ms ease both;
-    }
-
-    /* ── Header ── */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 20px 18px;
-    }
-    .greeting {
-      font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin: 0;
-    }
-    .wave {
-      font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
-      line-height: 1;
-    }
-    .sub {
-      font-size: 13px; color: var(--text-secondary);
-      margin: 2px 0 0; text-transform: capitalize;
-    }
-    .bell {
-      width: 38px; height: 38px;
-      border-radius: 12px;
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      display: flex; align-items: center; justify-content: center;
-      position: relative; cursor: pointer;
-      color: var(--text-primary);
-    }
-    .bell-dot {
-      position: absolute; top: 6px; right: 6px;
-      width: 8px; height: 8px; border-radius: 4px;
-      background: var(--danger); box-shadow: 0 0 6px var(--danger);
-      animation: scadit-badgePulse 1.6s ease-in-out infinite;
-    }
-
-    /* ── Banner ── */
+    .screen { padding-bottom: 110px; animation: scadit-fadeIn 280ms ease both; }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 8px 20px 14px; }
+    .greeting { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+    .wave { font-family: 'Apple Color Emoji','Segoe UI Emoji',sans-serif; }
+    .sub { font-size: 13px; color: var(--text-secondary); margin: 2px 0 0; text-transform: capitalize; }
+    .bell { width: 38px; height: 38px; border-radius: 12px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; color: var(--text-primary); }
+    .bell-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 4px; background: var(--danger); box-shadow: 0 0 6px var(--danger); animation: scadit-badgePulse 1.6s ease-in-out infinite; }
+    .stats { display: flex; align-items: center; padding: 0 20px 16px; gap: 0; }
+    .stat { flex: 1; text-align: center; }
+    .stat-n { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .stat-l { display: block; font-size: 10px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; }
+    .stat.danger .stat-n { color: var(--danger); }
+    .stat.warn .stat-n { color: var(--warning); }
+    .stat-sep { width: 1px; height: 36px; background: var(--glass-border); flex-shrink: 0; }
     .banner-wrap { padding: 0 16px 14px; }
-    .banner {
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      display: flex; align-items: center; gap: 14px;
-      background: linear-gradient(135deg, rgba(108,99,255,0.18), rgba(59,130,246,0.10));
-      border: 1px solid rgba(108,99,255,0.25);
-      backdrop-filter: blur(20px) saturate(140%);
-      -webkit-backdrop-filter: blur(20px) saturate(140%);
-      animation: scadit-slideUp 400ms cubic-bezier(0.2,0.8,0.2,1) 60ms both;
-    }
-    .banner-icon {
-      width: 40px; height: 40px; border-radius: 12px;
-      background: rgba(255,255,255,0.10);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
+    .banner { border-radius: var(--radius); padding: 14px 16px; display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, rgba(108,99,255,0.16), rgba(59,130,246,0.08)); border: 1px solid rgba(108,99,255,0.24); backdrop-filter: blur(20px); animation: scadit-slideUp 400ms cubic-bezier(0.2,0.8,0.2,1) 60ms both; }
+    .banner-ico { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.10); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .banner-body { flex: 1; min-width: 0; }
-    .banner-label {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.4px; text-transform: uppercase;
-      color: var(--text-secondary);
-    }
-    .banner-title { font-size: 14px; font-weight: 700; margin-top: 2px; }
-    .banner-amount {
-      font-size: 14px; font-weight: 800;
-      color: var(--danger); font-variant-numeric: tabular-nums;
-    }
-
-    /* ── Chips ── */
-    .chips {
-      display: flex; gap: 8px; overflow-x: auto;
-      padding: 0 16px 16px; scrollbar-width: none;
-    }
-    .chips::-webkit-scrollbar { display: none; }
-    .chip {
-      flex-shrink: 0; white-space: nowrap;
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 7px 13px; border-radius: 100px;
-      border: 1px solid var(--glass-border);
-      background: var(--glass); backdrop-filter: blur(20px);
-      color: var(--text-primary); font-size: 12.5px; font-weight: 600;
-      cursor: pointer; transition: all 180ms ease; font-family: inherit;
-    }
-    .chip.active { border-color: transparent; background: var(--accent-grad); color: white; }
-    .chip-dot { width: 6px; height: 6px; border-radius: 3px; }
-    .chip-count {
-      font-size: 10.5px; font-weight: 700;
-      padding: 1px 6px; border-radius: 8px;
-      background: rgba(255,255,255,0.07);
-    }
-    .chip.active .chip-count { background: rgba(255,255,255,0.22); }
-
-    /* ── Empty state ── */
-    .empty {
-      text-align: center; padding: 36px 32px;
-      animation: scadit-fadeIn 400ms ease both;
-    }
-    .empty-glow {
-      width: 110px; height: 110px; margin: 0 auto 18px; border-radius: 50%;
-      background: radial-gradient(circle at 50% 50%, rgba(108,99,255,0.20), transparent 65%);
-      display: flex; align-items: center; justify-content: center;
-      animation: scadit-float 3s ease-in-out infinite;
-    }
-    .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-    .empty-sub {
-      font-size: 13px; color: var(--text-secondary);
-      line-height: 1.5; max-width: 260px; margin: 0 auto 20px;
-    }
-
-    /* ── List + swipe cards ── */
-    .list { padding-bottom: 8px; }
-
-    .swipe-row {
-      position: relative; margin: 0 16px 12px;
-      opacity: 0;
-      animation: scadit-slideUp 420ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-      animation-delay: calc(var(--i, 0) * 50ms);
-    }
-    .swipe-action {
-      position: absolute; right: 0; top: 0; bottom: 0; width: 84px;
-      display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, var(--danger), #B5333E);
-      border-radius: var(--radius);
-      cursor: pointer;
-    }
-    .swipe-row.swiped .card { transform: translateX(-92px); }
-
-    .card {
-      position: relative;
-      transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-      border-radius: var(--radius);
-      padding: 14px 16px 14px 22px;
-      display: flex; align-items: stretch; gap: 14px;
-      cursor: pointer;
-      background: var(--glass);
-      backdrop-filter: blur(20px) saturate(140%);
-      -webkit-backdrop-filter: blur(20px) saturate(140%);
-      border: 1px solid var(--glass-border);
-      overflow: hidden;
-    }
+    .banner-lbl { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-tertiary); }
+    .banner-name { font-size: 14px; font-weight: 700; margin-top: 2px; }
+    .banner-days { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+    .banner-amt { font-size: 15px; font-weight: 800; color: var(--danger); flex-shrink: 0; }
+    .empty { text-align: center; padding: 60px 32px; animation: scadit-fadeIn 400ms ease both; }
+    .empty-emoji { font-size: 56px; display: block; margin-bottom: 16px; animation: scadit-float 3s ease-in-out infinite; }
+    .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .empty-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.55; max-width: 260px; margin: 0 auto; }
+    .section { padding: 0 16px 4px; }
+    .sec-hdr { display: flex; align-items: center; gap: 8px; padding: 12px 0 8px; }
+    .sec-ico { width: 26px; height: 26px; border-radius: 8px; border: 1px solid; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sec-title { font-size: 11.5px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-secondary); flex: 1; }
+    .sec-count { font-size: 11px; font-weight: 700; color: var(--text-tertiary); }
+    .swipe-row { position: relative; margin-bottom: 8px; opacity: 0; animation: scadit-slideUp 420ms cubic-bezier(0.2,0.8,0.2,1) forwards; animation-delay: calc(var(--i,0) * 35ms); }
+    .swipe-del { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--danger), #B5333E); border-radius: var(--radius); cursor: pointer; }
+    .swipe-row.swiped .card { transform: translateX(-88px); }
+    .card { position: relative; transition: transform 220ms cubic-bezier(0.2,0.8,0.2,1); border-radius: var(--radius); padding: 13px 14px 13px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; background: var(--glass); backdrop-filter: blur(20px) saturate(140%); -webkit-backdrop-filter: blur(20px) saturate(140%); border: 1px solid var(--glass-border); overflow: hidden; }
     .card.pulse { animation: scadit-urgencyPulse 1.8s ease-in-out infinite; }
-
-    .urgency-bar {
-      position: absolute; left: 0; top: 10px; bottom: 10px;
-      width: 4px; border-radius: 4px;
-    }
-    .card-icon {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: var(--icon-tile-bg); border: 1px solid var(--icon-tile-border);
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .card-body { flex: 1; min-width: 0; }
-    .card-title {
-      font-size: 15px; font-weight: 600;
-      color: var(--text-primary); letter-spacing: -0.1px; line-height: 1.2;
-    }
-    .card-vehicle {
-      font-size: 12px; color: var(--text-secondary); margin-top: 3px;
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    }
-    .card-date {
-      font-size: 11px; color: var(--text-tertiary); margin-top: 6px; letter-spacing: 0.3px;
-    }
-    .card-right {
-      display: flex; flex-direction: column;
-      align-items: flex-end; justify-content: space-between; min-width: 64px;
-    }
-    .days-wrap { text-align: right; }
-    .days { font-size: 22px; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
-    .days-label {
-      font-size: 9.5px; font-weight: 600;
-      letter-spacing: 0.5px; text-transform: uppercase; margin-top: 3px;
-    }
-    .amount {
-      font-size: 13px; font-weight: 700;
-      color: var(--text-primary); font-variant-numeric: tabular-nums;
-    }
-
-    /* ── FAB ── */
-    .fab {
-      position: fixed;
-      right: 18px; bottom: 82px;
-      width: 58px; height: 58px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,0.18);
-      background: var(--accent-grad); color: white;
-      cursor: pointer; z-index: 20;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow:
-        0 12px 28px rgba(108,99,255,0.45),
-        0 4px 12px rgba(59,130,246,0.30),
-        inset 0 1px 0 rgba(255,255,255,0.25);
-      animation: scadit-slideUp 500ms cubic-bezier(0.2,0.8,0.2,1) 200ms both;
-    }
-    .fab:active { transform: scale(0.93); }
-
-    /* ── Primary button ── */
-    .primary-btn {
-      border: none; cursor: pointer;
-      padding: 12px 22px; border-radius: 14px;
-      background: var(--accent-grad); color: white;
-      font-size: 14px; font-weight: 600; font-family: inherit;
-      box-shadow: 0 8px 20px rgba(108,99,255,0.35);
-      position: relative; overflow: hidden;
-    }
-    .shimmer::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.28) 50%, transparent 70%);
-      background-size: 200% 100%;
-      animation: scadit-shimmer 2.8s ease-in-out infinite;
-      pointer-events: none;
-    }
+    .u-bar { position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 4px; }
+    .c-body { flex: 1; min-width: 0; }
+    .c-name { font-size: 14.5px; font-weight: 600; color: var(--text-primary); line-height: 1.25; }
+    .c-date { font-size: 11.5px; color: var(--text-tertiary); margin-top: 4px; letter-spacing: 0.2px; }
+    .c-vehicle { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .c-right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; min-width: 48px; }
+    .c-days { font-size: 22px; font-weight: 800; line-height: 1; letter-spacing: -0.5px; }
+    .c-label { font-size: 9.5px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    .c-amt { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-top: 4px; font-variant-numeric: tabular-nums; }
+    .footer-note { text-align: center; font-size: 11.5px; color: var(--text-tertiary); padding: 12px 20px 4px; }
   `],
 })
 export class DeadlinesComponent {
@@ -395,11 +210,10 @@ export class DeadlinesComponent {
   private readonly notifScheduler   = inject(NotificationSchedulerService);
   private readonly router           = inject(Router);
 
-  readonly filter    = signal<FilterKey>('all');
-  readonly swipedId  = signal<number | null>(null);
+  readonly swipedId = signal<number | null>(null);
   private readonly today = new Date();
 
-  // ── Derived signals ──────────────────────────────────────────
+  // ── Computed signals ─────────────────────────────────────────
 
   readonly userName = computed(() => {
     const email = this.settings.profile()?.email ?? '';
@@ -414,61 +228,50 @@ export class DeadlinesComponent {
   readonly vehicleMap = computed(() => {
     const map = new Map<string, string>();
     for (const v of this.vehicleService.all()) {
-      const label = [v.marca, v.modello].filter(Boolean).join(' ') + (v.targa ? ` — ${v.targa}` : '');
+      const label = [v.marca, v.modello].filter(Boolean).join(' ') + (v.targa ? ` · ${v.targa}` : '');
       map.set(v.uuid, label);
     }
     return map;
   });
 
-  // Only active (non-completed) deadlines sorted by date
-  readonly upcoming = computed(() =>
+  /** Solo scadenze da catalogo (importate automaticamente), non completate, ordinate per data */
+  readonly catalogAll = computed(() =>
     this.deadlineService.all()
-      .filter(d => !d.completed)
+      .filter(d => !d.completed && d.catalogId != null)
       .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()),
   );
 
-  readonly filtered = computed((): Deadline[] => {
-    const f = this.filter();
-    const items = this.upcoming();
-    if (f === 'all') return items;
-    return items.filter(d => this.urgencyOf(d).key === f);
-  });
-
-  readonly chips = computed(() => {
-    const all = this.upcoming();
-    const count = (k: UrgencyKey) => all.filter(d => this.urgencyOf(d).key === k).length;
-    return [
-      { key: 'all'      as FilterKey, label: 'Tutte',      count: all.length,        dot: null },
-      { key: 'critical' as FilterKey, label: 'Urgenti',    count: count('critical'), dot: '#FF4757' },
-      { key: 'warning'  as FilterKey, label: 'In arrivo',  count: count('warning'),  dot: '#FFA502' },
-      { key: 'safe'     as FilterKey, label: 'Tranquille', count: count('safe'),     dot: '#2ED573' },
-    ];
-  });
+  readonly overdueCount  = computed(() => this.catalogAll().filter(d => this.daysUntil(d) < 0).length);
+  readonly criticalCount = computed(() => this.catalogAll().filter(d => { const n = this.daysUntil(d); return n >= 0 && n < 7; }).length);
+  readonly hasOverdue    = computed(() => this.overdueCount() > 0);
 
   readonly nextUp = computed(() => {
-    const upcoming = this.upcoming().filter(d => this.daysUntil(d) >= 0);
+    const upcoming = this.catalogAll().filter(d => this.daysUntil(d) >= 0);
     if (!upcoming.length) return null;
     const d = upcoming[0];
     return {
-      name:      d.customName,
-      days:      this.daysUntil(d),
-      amountEur: d.amountCents ? (d.amountCents / 100).toFixed(2) : null,
+      name:   d.customName,
+      days:   this.daysUntil(d),
+      amount: d.amountCents ? (d.amountCents / 100).toFixed(2) : null,
     };
   });
 
-  readonly hasOverdue = computed(() =>
-    this.upcoming().some(d => this.daysUntil(d) < 0),
-  );
+  /** Scadenze raggruppate per categoria, nell'ordine definito da CATEGORY_ORDER */
+  readonly byCategory = computed(() => {
+    const groups = new Map<string, Deadline[]>();
+    for (const d of this.catalogAll()) {
+      if (!groups.has(d.category)) groups.set(d.category, []);
+      groups.get(d.category)!.push(d);
+    }
+    return CATEGORY_ORDER
+      .filter(cat => groups.has(cat))
+      .map(cat => ({ cat, items: groups.get(cat)!, ...CAT_META[cat] }));
+  });
 
   // ── Template helpers ─────────────────────────────────────────
 
-  iconOf(d: Deadline): string {
-    return CATEGORY_ICON[d.category] ?? 'calendar';
-  }
-
   vehicleLabel(d: Deadline): string {
-    if (d.vehicleId) return this.vehicleMap().get(d.vehicleId) ?? CATEGORY_LABEL[d.category] ?? d.category;
-    return CATEGORY_LABEL[d.category] ?? d.category;
+    return d.vehicleId ? (this.vehicleMap().get(d.vehicleId) ?? '') : '';
   }
 
   formatDate(d: Deadline): string {
@@ -482,7 +285,7 @@ export class DeadlinesComponent {
 
   daysUntil(d: Deadline): number {
     const target = new Date(d.dueDate);
-    const now = new Date(this.today.getFullYear(), this.today.getMonth(), this.today.getDate());
+    const now    = new Date(this.today.getFullYear(), this.today.getMonth(), this.today.getDate());
     return Math.ceil((+target - +now) / 86400000);
   }
 
@@ -490,10 +293,10 @@ export class DeadlinesComponent {
 
   urgencyOf(d: Deadline): Urgency {
     const days = this.daysUntil(d);
-    if (days < 0)  return { key: 'overdue',  color: '#FF4757', label: 'SCADUTA' };
-    if (days < 7)  return { key: 'critical', color: '#FF4757', label: 'URGENTE' };
-    if (days < 30) return { key: 'warning',  color: '#FFA502', label: 'IN ARRIVO' };
-    return            { key: 'safe',     color: '#2ED573', label: 'TRANQUILLA' };
+    if (days < 0)  return { key: 'overdue',  color: '#FF4757' };
+    if (days < 7)  return { key: 'critical', color: '#FF4757' };
+    if (days < 30) return { key: 'warning',  color: '#FFA502' };
+    return            { key: 'safe',     color: '#2ED573' };
   }
 
   isUrgentPulse(d: Deadline): boolean {

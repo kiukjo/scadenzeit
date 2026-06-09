@@ -12,14 +12,14 @@
   },
   {
     "id": "dichiarazione_redditi_pf",
-    "name": "Dichiarazione dei redditi (Mod. Redditi PF)",
+    "name": "Dichiarazione dei redditi (Redditi PF)",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 11,
     "day": 30,
     "reminders": [60, 30, 7, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Per lavoratori autonomi e partite IVA"
+    "notes": "Modello Redditi PF per lavoratori autonomi e partite IVA"
   },
   {
     "id": "isee",
@@ -30,18 +30,18 @@
     "day": 31,
     "reminders": [30, 15, 7],
     "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Dichiarazione Sostitutiva Unica — valida per 12 mesi dal rilascio"
+    "notes": "Dichiarazione Sostitutiva Unica — valida 12 mesi dal rilascio. Rinnovare entro gennaio per non perdere bonus e agevolazioni"
   },
   {
     "id": "imu_prima_rata",
-    "name": "IMU — Prima rata",
+    "name": "IMU — Prima rata (acconto)",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 6,
     "day": 16,
     "reminders": [30, 15, 7, 1],
     "appliesTo": ["proprietario_casa"],
-    "notes": "Imposta Municipale Propria — acconto 50% calcolato su aliquote anno precedente"
+    "notes": "Imposta Municipale Propria — acconto 50% calcolato sulle aliquote dell'anno precedente"
   },
   {
     "id": "imu_seconda_rata",
@@ -52,7 +52,7 @@
     "day": 16,
     "reminders": [30, 15, 7, 1],
     "appliesTo": ["proprietario_casa"],
-    "notes": "Saldo IMU con aliquote deliberate dal comune per l'anno in corso"
+    "notes": "Saldo IMU con le aliquote deliberate dal comune per l'anno in corso"
   },
   {
     "id": "tari",
@@ -63,18 +63,18 @@
     "day": 30,
     "reminders": [30, 15, 7],
     "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Scadenza indicativa — varia per comune. Inserire la data reale dalla bolletta"
+    "notes": "Scadenza indicativa — varia per comune. Aggiornare la data reale dalla bolletta"
   },
   {
     "id": "acconto_irpef",
-    "name": "Acconto IRPEF",
+    "name": "Acconto IRPEF (II rata)",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 11,
     "day": 30,
     "reminders": [30, 15, 7, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Secondo acconto IRPEF (100% del dovuto meno primo acconto di giugno)"
+    "notes": "Secondo acconto IRPEF — 100% del dovuto meno il primo acconto versato a giugno"
   },
   {
     "id": "saldo_irpef",
@@ -85,7 +85,7 @@
     "day": 30,
     "reminders": [30, 15, 7, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Saldo anno precedente + primo acconto anno in corso"
+    "notes": "Saldo IRPEF anno precedente + primo acconto anno in corso (40% dell'IRPEF dovuta)"
   },
   {
     "id": "f24_iva_trimestrale_q1",
@@ -96,7 +96,7 @@
     "day": 16,
     "reminders": [15, 7, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Liquidazione IVA trimestrale (gen-mar) con maggiorazione 1%"
+    "notes": "Liquidazione IVA trimestrale (gen-mar) con maggiorazione 1% tramite F24"
   },
   {
     "id": "f24_iva_trimestrale_q2",
@@ -107,7 +107,7 @@
     "day": 16,
     "reminders": [15, 7, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Liquidazione IVA trimestrale (apr-giu)"
+    "notes": "Liquidazione IVA trimestrale (apr-giu) tramite F24"
   },
   {
     "id": "f24_iva_trimestrale_q3",
@@ -118,11 +118,33 @@
     "day": 16,
     "reminders": [15, 7, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Liquidazione IVA trimestrale (lug-set)"
+    "notes": "Liquidazione IVA trimestrale (lug-set) tramite F24"
+  },
+  {
+    "id": "f24_iva_trimestrale_q4",
+    "name": "IVA trimestrale — IV trimestre",
+    "category": "fisco",
+    "recurrence": "yearly",
+    "month": 3,
+    "day": 16,
+    "reminders": [15, 7, 1],
+    "appliesTo": ["autonomo"],
+    "notes": "Liquidazione IVA trimestrale (ott-dic anno precedente) tramite F24"
+  },
+  {
+    "id": "acconto_iva",
+    "name": "Acconto IVA annuale",
+    "category": "fisco",
+    "recurrence": "yearly",
+    "month": 12,
+    "day": 27,
+    "reminders": [15, 7, 1],
+    "appliesTo": ["autonomo"],
+    "notes": "Acconto IVA pari all'88% dell'IVA dovuta per lo stesso periodo dell'anno precedente"
   },
   {
     "id": "inps_contributi_autonomo_q1",
-    "name": "INPS — Contributi artigiani/commercianti I rata",
+    "name": "INPS — Contributi fissi I rata",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 5,
@@ -133,33 +155,36 @@
   },
   {
     "id": "inps_contributi_autonomo_q2",
-    "name": "INPS — Contributi artigiani/commercianti II rata",
+    "name": "INPS — Contributi fissi II rata",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 8,
     "day": 16,
     "reminders": [15, 7, 1],
-    "appliesTo": ["autonomo"]
+    "appliesTo": ["autonomo"],
+    "notes": "Seconda rata contributi fissi INPS artigiani e commercianti"
   },
   {
     "id": "inps_contributi_autonomo_q3",
-    "name": "INPS — Contributi artigiani/commercianti III rata",
+    "name": "INPS — Contributi fissi III rata",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 11,
     "day": 16,
     "reminders": [15, 7, 1],
-    "appliesTo": ["autonomo"]
+    "appliesTo": ["autonomo"],
+    "notes": "Terza rata contributi fissi INPS artigiani e commercianti"
   },
   {
     "id": "inps_contributi_autonomo_q4",
-    "name": "INPS — Contributi artigiani/commercianti IV rata (saldo)",
+    "name": "INPS — Contributi fissi IV rata",
     "category": "fisco",
     "recurrence": "yearly",
     "month": 2,
     "day": 16,
     "reminders": [15, 7, 1],
-    "appliesTo": ["autonomo"]
+    "appliesTo": ["autonomo"],
+    "notes": "Quarta rata contributi fissi INPS artigiani e commercianti (saldo anno precedente)"
   },
   {
     "id": "canone_rai",
@@ -170,117 +195,7 @@
     "day": 31,
     "reminders": [30, 15, 7],
     "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Addebitato sulla bolletta elettrica in 10 rate (gen-ott) oppure in unica soluzione"
-  },
-  {
-    "id": "bollo_auto",
-    "name": "Bollo auto",
-    "category": "veicoli",
-    "recurrence": "variable",
-    "reminders": [30, 15, 7, 1],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Scadenza nel mese di immatricolazione — calcolata automaticamente da targa"
-  },
-  {
-    "id": "bollo_moto",
-    "name": "Bollo moto",
-    "category": "veicoli",
-    "recurrence": "variable",
-    "reminders": [30, 15, 7, 1],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Scadenza nel mese di immatricolazione — calcolata automaticamente da targa"
-  },
-  {
-    "id": "revisione_auto",
-    "name": "Revisione auto",
-    "category": "veicoli",
-    "recurrence": "biennial",
-    "reminders": [60, 30, 7],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Prima revisione a 4 anni dall'immatricolazione, poi ogni 2 anni"
-  },
-  {
-    "id": "assicurazione_rc_auto",
-    "name": "Assicurazione RC Auto",
-    "category": "veicoli",
-    "recurrence": "yearly",
-    "reminders": [30, 15, 7, 3],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Inserire data scadenza dalla polizza assicurativa"
-  },
-  {
-    "id": "patente_guida",
-    "name": "Patente di guida",
-    "category": "veicoli",
-    "recurrence": "variable",
-    "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Durata 10 anni (under 50) o 5 anni (over 50/70). Rinnovo in motorizzazione o online"
-  },
-  {
-    "id": "tessera_sanitaria",
-    "name": "Tessera Sanitaria / Codice Fiscale",
-    "category": "sanita",
-    "recurrence": "variable",
-    "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Valida 6 anni — rinnovata automaticamente dall'Agenzia delle Entrate"
-  },
-  {
-    "id": "esenzione_ticket",
-    "name": "Esenzione ticket sanitario",
-    "category": "sanita",
-    "recurrence": "yearly",
-    "month": 12,
-    "day": 31,
-    "reminders": [30, 15],
-    "appliesTo": ["dipendente", "autonomo"],
-    "notes": "L'esenzione per reddito va rinnovata ogni anno con autocertificazione"
-  },
-  {
-    "id": "visita_medica_lavoro",
-    "name": "Visita medica del lavoro",
-    "category": "sanita",
-    "recurrence": "yearly",
-    "reminders": [30, 15, 7],
-    "appliesTo": ["dipendente"],
-    "notes": "Sorveglianza sanitaria obbligatoria — periodicità definita dal medico competente"
-  },
-  {
-    "id": "carta_identita",
-    "name": "Carta d'identità",
-    "category": "documenti",
-    "recurrence": "variable",
-    "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Valida 10 anni (adulti), 5 anni (3-18 anni), 3 anni (under 3). Rinnovo in Comune"
-  },
-  {
-    "id": "passaporto",
-    "name": "Passaporto",
-    "category": "documenti",
-    "recurrence": "variable",
-    "reminders": [180, 90, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Valido 10 anni (adulti). Richiesta in Questura o online su Polizia di Stato"
-  },
-  {
-    "id": "permesso_soggiorno",
-    "name": "Permesso di soggiorno",
-    "category": "documenti",
-    "recurrence": "variable",
-    "reminders": [180, 90, 60, 30],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Durata variabile (1-2 anni). Rinnovo presso Questura o Sportello Unico Immigrazione"
-  },
-  {
-    "id": "affitto_rinnovo",
-    "name": "Rinnovo contratto d'affitto",
-    "category": "casa",
-    "recurrence": "variable",
-    "reminders": [180, 90, 60],
-    "appliesTo": ["dipendente", "autonomo"],
-    "notes": "Contratto 4+4: disdetta almeno 6 mesi prima. Contratto 3+2: 3 mesi prima"
+    "notes": "Addebitato sulla bolletta elettrica in 10 rate (gen-ott). Se non addebitato, versare tramite F24 entro il 31 gennaio"
   },
   {
     "id": "cedolare_secca_acconto",
@@ -291,7 +206,7 @@
     "day": 30,
     "reminders": [30, 15, 7],
     "appliesTo": ["proprietario_casa"],
-    "notes": "Acconto cedolare secca 100% (o 50%+50% se superiore a €257,52)"
+    "notes": "Acconto cedolare secca 100% (o 40%+60% se superiore a €257,52)"
   },
   {
     "id": "cedolare_secca_saldo",
@@ -313,7 +228,7 @@
     "day": 31,
     "reminders": [60, 30, 15],
     "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Obbligatoria per legge — libretto impianto da aggiornare. Multa fino a €500"
+    "notes": "Obbligatoria per legge — il libretto impianto deve essere aggiornato. Multa fino a €500 in caso di mancata manutenzione"
   },
   {
     "id": "condominio_assemblea",
@@ -324,7 +239,16 @@
     "day": 30,
     "reminders": [15, 7],
     "appliesTo": ["proprietario_casa"],
-    "notes": "L'assemblea ordinaria deve tenersi entro 180 giorni dalla chiusura dell'esercizio"
+    "notes": "L'assemblea ordinaria deve tenersi entro 180 giorni dalla chiusura dell'esercizio condominiale"
+  },
+  {
+    "id": "affitto_rinnovo",
+    "name": "Rinnovo / disdetta contratto d'affitto",
+    "category": "casa",
+    "recurrence": "variable",
+    "reminders": [180, 90, 60],
+    "appliesTo": ["dipendente", "autonomo"],
+    "notes": "Contratto 4+4: disdetta almeno 6 mesi prima. Contratto 3+2: 3 mesi prima. Aggiungere la data specifica del tuo contratto"
   },
   {
     "id": "contratto_gas_luce",
@@ -333,7 +257,72 @@
     "recurrence": "variable",
     "reminders": [90, 30, 15],
     "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
-    "notes": "Verificare data scadenza offerta dalla bolletta"
+    "notes": "Verificare la data di scadenza dell'offerta dalla bolletta e aggiungere manualmente"
+  },
+  {
+    "id": "esenzione_ticket",
+    "name": "Esenzione ticket sanitario",
+    "category": "sanita",
+    "recurrence": "yearly",
+    "month": 12,
+    "day": 31,
+    "reminders": [30, 15],
+    "appliesTo": ["dipendente", "autonomo"],
+    "notes": "L'esenzione per reddito va rinnovata ogni anno con autocertificazione al medico di base"
+  },
+  {
+    "id": "visita_medica_lavoro",
+    "name": "Visita medica del lavoro",
+    "category": "sanita",
+    "recurrence": "variable",
+    "reminders": [30, 15, 7],
+    "appliesTo": ["dipendente"],
+    "notes": "Sorveglianza sanitaria obbligatoria — la periodicità è definita dal medico competente aziendale. Aggiungere la data specifica"
+  },
+  {
+    "id": "tessera_sanitaria",
+    "name": "Tessera Sanitaria / Codice Fiscale",
+    "category": "sanita",
+    "recurrence": "variable",
+    "reminders": [180, 90, 30],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "notes": "Valida 6 anni — rinnovata automaticamente dall'Agenzia delle Entrate. Aggiungere la data di scadenza riportata sulla tessera"
+  },
+  {
+    "id": "carta_identita",
+    "name": "Carta d'identità",
+    "category": "documenti",
+    "recurrence": "variable",
+    "reminders": [180, 90, 30],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "notes": "Valida 10 anni (adulti), 5 anni (3-18 anni), 3 anni (under 3). Rinnovo in Comune o online"
+  },
+  {
+    "id": "passaporto",
+    "name": "Passaporto",
+    "category": "documenti",
+    "recurrence": "variable",
+    "reminders": [180, 90, 30],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "notes": "Valido 10 anni (adulti). Richiesta online su Polizia di Stato o in Questura"
+  },
+  {
+    "id": "permesso_soggiorno",
+    "name": "Permesso di soggiorno",
+    "category": "documenti",
+    "recurrence": "variable",
+    "reminders": [180, 90, 60, 30],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "notes": "Durata variabile (1-2 anni). Rinnovo presso Questura entro 60 giorni dalla scadenza"
+  },
+  {
+    "id": "patente_guida",
+    "name": "Patente di guida",
+    "category": "documenti",
+    "recurrence": "variable",
+    "reminders": [180, 90, 30],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "notes": "10 anni (under 50), 5 anni (50-70), 3 anni (over 70). Rinnovo in motorizzazione o online"
   },
   {
     "id": "cu_certificazione_unica",
@@ -344,7 +333,7 @@
     "day": 31,
     "reminders": [30, 15, 7],
     "appliesTo": ["dipendente"],
-    "notes": "Il datore di lavoro consegna la CU entro il 31 marzo — serve per il 730"
+    "notes": "Il datore di lavoro deve consegnare la CU entro il 31 marzo — documento necessario per la dichiarazione 730"
   },
   {
     "id": "inail",
@@ -355,7 +344,7 @@
     "day": 16,
     "reminders": [30, 15, 7],
     "appliesTo": ["autonomo"],
-    "notes": "Autoliquidazione INAIL — saldo anno precedente + acconto anno in corso"
+    "notes": "Autoliquidazione INAIL — saldo anno precedente + acconto anno in corso tramite F24"
   },
   {
     "id": "verifica_estratto_inps",
@@ -366,7 +355,7 @@
     "day": 31,
     "reminders": [30],
     "appliesTo": ["dipendente"],
-    "notes": "Consigliato verificare annualmente i contributi versati su MyINPS"
+    "notes": "Consigliato verificare annualmente i contributi versati accedendo a MyINPS con SPID"
   },
   {
     "id": "rinnovo_iscrizione_albo",
@@ -377,27 +366,27 @@
     "day": 31,
     "reminders": [60, 30, 15],
     "appliesTo": ["autonomo"],
-    "notes": "Scadenza 31/12 per la maggior parte degli Albi — verificare il proprio"
+    "notes": "Scadenza 31/12 per la maggior parte degli Albi. Verificare le scadenze specifiche del proprio Ordine"
   },
   {
     "id": "quota_associativa",
-    "name": "Quota associativa / ordine professionale",
+    "name": "Quota Ordine / associazione professionale",
     "category": "lavoro",
     "recurrence": "yearly",
     "month": 1,
     "day": 31,
     "reminders": [30, 15],
     "appliesTo": ["autonomo"],
-    "notes": "Pagamento quota annuale Ordine/Associazione di categoria"
+    "notes": "Pagamento quota annuale Ordine o Associazione di categoria"
   },
   {
     "id": "fatture_da_emettere",
-    "name": "Fatturazione elettronica — controllo",
+    "name": "Fatturazione elettronica — controllo mensile",
     "category": "lavoro",
     "recurrence": "monthly",
     "day": 15,
     "reminders": [3, 1],
     "appliesTo": ["autonomo"],
-    "notes": "Emissione fatture entro il 15 del mese successivo all'operazione (regime ordinario)"
+    "notes": "Emissione fatture elettroniche entro il 15 del mese successivo all'operazione (regime ordinario)"
   }
 ]

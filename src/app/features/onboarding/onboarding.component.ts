@@ -128,9 +128,8 @@ export class OnboardingComponent {
       const profile: UserProfile = { isPremium: false, profileTypes: this.selectedTypes() };
       await this.settingsService.saveProfile(profile);
 
-      const entries = this.catalogService
-        .getByProfile(this.selectedTypes())
-        .filter((e) => e.recurrence !== 'variable');
+      // Usa getAutoImportable: solo voci con data fissa nota (no "variable", no senza month/day)
+      const entries = this.catalogService.getAutoImportable(this.selectedTypes());
 
       for (const entry of entries) {
         const draft    = this.catalogService.toDraft(entry);
