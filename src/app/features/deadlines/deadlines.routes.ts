@@ -13,4 +13,11 @@ export const DEADLINES_ROUTES: Routes = [
         (m) => m.DeadlineFormComponent,
       ),
   },
+  {
+    path: 'edit/:id',
+    loadComponent: () =>
+      import('./deadline-form/deadline-form.component').then(
+        (m) => m.DeadlineFormComponent,
+      ),
+  },
 ];

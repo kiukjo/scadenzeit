@@ -107,21 +107,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
           <span class="sec-count">{{ g.items.length }}</span>
         </div>
         @for (d of g.items; track d.id; let i = $index) {
-          <div class="swipe-row stagger" [style.--i]="gi*6+i" [class.swiped]="swipedId()===d.id">
-            <div class="swipe-del" (click)="onDelete(d,$event)"><app-icon name="trash" [size]="20" color="#fff"/></div>
-            <div class="card" [class.pulse]="isPulse(d)" (click)="toggleSwipe(d.id)">
-              <span class="ubar" [style.background]="urgencyColor(d)" [style.boxShadow]="'0 0 8px '+urgencyColor(d)+'80'"></span>
-              <div class="cbody">
-                <div class="cname">{{ d.customName }}</div>
-                <div class="cdate">{{ fmtDate(d) }}</div>
-              </div>
-              <div class="cright">
-                <div class="cdays" [style.color]="urgencyColor(d)">{{ absDays(d) }}</div>
-                <div class="clabel" [style.color]="urgencyColor(d)">{{ daysUntil(d) < 0 ? 'fa' : 'gg' }}</div>
-                @if (d.amountCents) { <div class="camt">€{{ (d.amountCents/100).toFixed(2) }}</div> }
-              </div>
-            </div>
-          </div>
+          <ng-container *ngTemplateOutlet="cardTpl; context:{$implicit:d,idx:gi*6+i}"></ng-container>
         }
       </div>
     }
@@ -147,21 +133,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
           <span class="sec-count">{{ vg.items.length }}</span>
         </div>
         @for (d of vg.items; track d.id; let i = $index) {
-          <div class="swipe-row stagger" [style.--i]="gi*4+i" [class.swiped]="swipedId()===d.id">
-            <div class="swipe-del" (click)="onDelete(d,$event)"><app-icon name="trash" [size]="20" color="#fff"/></div>
-            <div class="card" [class.pulse]="isPulse(d)" (click)="toggleSwipe(d.id)">
-              <span class="ubar" [style.background]="urgencyColor(d)" [style.boxShadow]="'0 0 8px '+urgencyColor(d)+'80'"></span>
-              <div class="cbody">
-                <div class="cname">{{ d.customName }}</div>
-                <div class="cdate">{{ fmtDate(d) }}</div>
-              </div>
-              <div class="cright">
-                <div class="cdays" [style.color]="urgencyColor(d)">{{ absDays(d) }}</div>
-                <div class="clabel" [style.color]="urgencyColor(d)">{{ daysUntil(d) < 0 ? 'fa' : 'gg' }}</div>
-                @if (d.amountCents) { <div class="camt">€{{ (d.amountCents/100).toFixed(2) }}</div> }
-              </div>
-            </div>
-          </div>
+          <ng-container *ngTemplateOutlet="cardTpl; context:{$implicit:d,idx:gi*4+i}"></ng-container>
         }
       </div>
     }
@@ -173,37 +145,49 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       <div class="empty">
         <span class="eico">✏️</span>
         <div class="etitle">Nessuna scadenza manuale</div>
-        <div class="esub">Aggiungi una scadenza personalizzata: mutuo, visita medica, abbonamento…</div>
+        <div class="esub">Aggiungi una scadenza personalizzata: mutuo, rata del mutuo, abbonamento…</div>
         <button class="ghost-btn" (click)="openAdd()">+ Aggiungi scadenza</button>
       </div>
     }
     <div class="section">
       @for (d of manualList(); track d.id; let i = $index) {
-        <div class="swipe-row stagger" [style.--i]="i" [class.swiped]="swipedId()===d.id">
-          <div class="swipe-del" (click)="onDelete(d,$event)"><app-icon name="trash" [size]="20" color="#fff"/></div>
-          <div class="card" [class.pulse]="isPulse(d)" (click)="toggleSwipe(d.id)">
-            <span class="ubar" [style.background]="urgencyColor(d)" [style.boxShadow]="'0 0 8px '+urgencyColor(d)+'80'"></span>
-            <div class="cbody">
-              <div class="cname">{{ d.customName }}</div>
-              <div class="cdate">{{ fmtDate(d) }}</div>
-            </div>
-            <div class="cright">
-              <div class="cdays" [style.color]="urgencyColor(d)">{{ absDays(d) }}</div>
-              <div class="clabel" [style.color]="urgencyColor(d)">{{ daysUntil(d) < 0 ? 'fa' : 'gg' }}</div>
-              @if (d.amountCents) { <div class="camt">€{{ (d.amountCents/100).toFixed(2) }}</div> }
-            </div>
-          </div>
-        </div>
+        <ng-container *ngTemplateOutlet="cardTpl; context:{$implicit:d,idx:i}"></ng-container>
       }
     </div>
-    @if (manualList().length > 0) {
-      <div class="add-row">
-        <button class="add-link" (click)="openAdd()">+ Aggiungi scadenza manuale</button>
-      </div>
-    }
+  }
+
+  <!-- FAB solo nel tab Manuali quando ci sono scadenze -->
+  @if (activeTab() === 'manuali' && manualList().length > 0) {
+    <button class="fab" (click)="openAdd()" aria-label="Aggiungi scadenza">
+      <app-icon name="plus" [size]="22" color="#fff" [strokeWidth]="2.5"/>
+    </button>
   }
 
 </div>
+<!-- ── Card template riusabile ── -->
+<ng-template #cardTpl let-d let-idx="idx">
+  <div class="swipe-row stagger" [style.--i]="idx" [class.swiped]="swipedId()===d.id">
+    <div class="swipe-del" (click)="onDelete(d,$event)"><app-icon name="trash" [size]="20" color="#fff"/></div>
+    <div class="card" [class.pulse]="isPulse(d)">
+      <span class="ubar" [style.background]="urgencyColor(d)" [style.boxShadow]="'0 0 8px '+urgencyColor(d)+'80'"></span>
+      <button class="check-btn" (click)="onComplete(d,$event)" [attr.aria-label]="'Segna come completata'">
+        <app-icon name="check" [size]="13" color="#2ED573"/>
+      </button>
+      <div class="cbody" (click)="openEdit(d)">
+        <div class="cname">{{ d.customName }}</div>
+        <div class="cdate">{{ fmtDate(d) }}</div>
+      </div>
+      <div class="cright" (click)="openEdit(d)">
+        <div class="cdays" [style.color]="urgencyColor(d)">{{ absDays(d) }}</div>
+        <div class="clabel" [style.color]="urgencyColor(d)">{{ daysUntil(d) < 0 ? 'fa' : 'gg' }}</div>
+        @if (d.amountCents) { <div class="camt">€{{ (d.amountCents/100).toFixed(2) }}</div> }
+      </div>
+      <button class="dots-btn" (click)="toggleSwipe(d.id);$event.stopPropagation()" aria-label="Elimina">
+        <app-icon name="dots" [size]="16"/>
+      </button>
+    </div>
+  </div>
+</ng-template>
   `,
   styles: [`
     :host{display:block}
@@ -242,7 +226,11 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     .swipe-row{position:relative;margin-bottom:8px;opacity:0;animation:scadit-slideUp 420ms cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0)*35ms)}
     .swipe-del{position:absolute;right:0;top:0;bottom:0;width:80px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--danger),#B5333E);border-radius:var(--radius);cursor:pointer}
     .swipe-row.swiped .card{transform:translateX(-88px)}
-    .card{position:relative;transition:transform 220ms cubic-bezier(.2,.8,.2,1);border-radius:var(--radius);padding:13px 14px 13px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;background:var(--glass);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--glass-border);overflow:hidden}
+    .card{position:relative;transition:transform 220ms cubic-bezier(.2,.8,.2,1);border-radius:var(--radius);padding:13px 8px 13px 20px;display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--glass-border);overflow:hidden}
+    .check-btn{width:32px;height:32px;border-radius:16px;border:1.5px solid var(--glass-border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 160ms ease}
+    .check-btn:active{border-color:#2ED573;background:rgba(46,213,115,.12);transform:scale(.9)}
+    .dots-btn{width:28px;height:28px;border-radius:8px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-tertiary)}
+    .fab{position:fixed;bottom:88px;right:20px;z-index:50;width:52px;height:52px;border-radius:26px;background:var(--accent-grad);border:none;cursor:pointer;box-shadow:0 8px 24px rgba(108,99,255,.45);display:flex;align-items:center;justify-content:center;animation:scadit-slideUp 280ms cubic-bezier(.2,.8,.2,1) both}
     .card.pulse{animation:scadit-urgencyPulse 1.8s ease-in-out infinite}
     .ubar{position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:4px}
     .cbody{flex:1;min-width:0}
@@ -411,5 +399,17 @@ export class DeadlinesComponent {
 
   openAdd(): void {
     this.router.navigate(['/deadlines/new']);
+  }
+
+  openEdit(d: Deadline): void {
+    if (d.id == null) return;
+    this.router.navigate(['/deadlines/edit', d.id]);
+  }
+
+  async onComplete(d: Deadline, e: Event): Promise<void> {
+    e.stopPropagation();
+    if (d.id == null) return;
+    await this.notifScheduler.cancelReminders(d);
+    await this.deadlineService.markCompleted(d.id);
   }
 }

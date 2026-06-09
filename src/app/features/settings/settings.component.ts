@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { SupabaseAuthService } from '../../core/services/supabase-auth.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { DeadlineService } from '../../core/services/deadline.service';
+import { CatalogService } from '../../core/services/catalog.service';
+import { NotificationSchedulerService } from '../../core/services/notification-scheduler.service';
 import { DocumentService } from '../../core/services/document.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { IconComponent } from '../../shared/components/icon.component';
@@ -123,6 +125,25 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
             <span class="row-trail">v 0.4.0</span>
           </div>
         </div>
+      </div>
+
+      <!-- ── Scadenze group ─────────────────────────────────────── -->
+      <div class="section-label">Scadenze</div>
+      <div class="pad">
+        <div class="group stagger" style="--i:4">
+          <div class="row" (click)="reimportCatalog()">
+            <span class="row-icon"><app-icon name="refresh" [size]="15" /></span>
+            <div class="row-label">Aggiorna scadenze dal profilo</div>
+            @if (isReimporting()) {
+              <span class="spin-sm"></span>
+            } @else {
+              <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
+            }
+          </div>
+        </div>
+        @if (reimportToast()) {
+          <p class="toast-msg">{{ reimportToast() }}</p>
+        }
       </div>
 
       <!-- ── Logout button ───────────────────────────────────────── -->
@@ -311,6 +332,9 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
     }
     .knob.on { left: 19px; }
 
+    .spin-sm{width:16px;height:16px;border-radius:50%;border:2px solid var(--glass-border);border-top-color:var(--accent);animation:scadit-spin .7s linear infinite;flex-shrink:0}
+    .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:6px 0 0;animation:scadit-fadeIn 200ms ease both}
+
     /* ── Logout ── */
     .logout-btn {
       width: 100%; padding: 14px; border-radius: 14px;
@@ -376,6 +400,8 @@ export class SettingsComponent {
   private readonly authService     = inject(SupabaseAuthService);
   private readonly settingsService = inject(SettingsService);
   private readonly deadlineService = inject(DeadlineService);
+  private readonly catalogService  = inject(CatalogService);
+  private readonly notifScheduler  = inject(NotificationSchedulerService);
   private readonly documentService = inject(DocumentService);
   readonly         themeService    = inject(ThemeService);
   private readonly router          = inject(Router);
@@ -387,6 +413,8 @@ export class SettingsComponent {
   readonly isLoggingOut   = signal(false);
   readonly confirmOpen    = signal(false);
   readonly showComingSoon = signal(false);
+  readonly isReimporting  = signal(false);
+  readonly reimportToast  = signal<string | null>(null);
 
   readonly maxDeadlines = FREE_TIER.MAX_DEADLINES;
 
@@ -421,6 +449,34 @@ export class SettingsComponent {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     return `${m}/${d.getFullYear()}`;
   });
+
+  async reimportCatalog(): Promise<void> {
+    const profileTypes = this.profile()?.profileTypes;
+    if (!profileTypes?.length || this.isReimporting()) return;
+    this.isReimporting.set(true);
+    try {
+      const importable = this.catalogService.getAutoImportable(profileTypes);
+      const existingIds = new Set(
+        this.deadlineService.all().map(d => d.catalogId).filter(Boolean)
+      );
+      const missing = importable.filter(e => !existingIds.has(e.id));
+      for (const entry of missing) {
+        const draft    = this.catalogService.toDraft(entry);
+        const deadline = DeadlineService.build(draft);
+        const id       = await this.deadlineService.add(deadline);
+        const saved    = await this.deadlineService.getById(id);
+        if (saved) await this.notifScheduler.scheduleReminders(saved);
+      }
+      const n = missing.length;
+      this.reimportToast.set(
+        n > 0 ? `✓ ${n} scadenz${n === 1 ? 'a aggiunta' : 'e aggiunte'}!`
+               : '✓ Tutto aggiornato — nessuna novità'
+      );
+      setTimeout(() => this.reimportToast.set(null), 3500);
+    } finally {
+      this.isReimporting.set(false);
+    }
+  }
 
   async logout(): Promise<void> {
     this.isLoggingOut.set(true);
