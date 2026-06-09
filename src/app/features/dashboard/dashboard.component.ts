@@ -108,6 +108,24 @@ const IT_MO_S = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','no
     <div class="paid-count">{{ paidThisYear().count }} pagamenti</div>
   </div>
 
+  <!-- Pagamenti recenti -->
+  @if (recentPaid().length > 0) {
+    <div class="hist">
+      @for (p of recentPaid(); track p.id) {
+        <div class="hist-row">
+          <span class="hist-check"><app-icon name="check" [size]="11" color="#2ED573" [strokeWidth]="2.6"/></span>
+          <div class="hist-body">
+            <div class="hist-name">{{ p.customName }}</div>
+            <div class="hist-date">{{ paidDate(p) }}</div>
+          </div>
+          @if (p.amountCents) {
+            <div class="hist-amt">€ {{ (p.amountCents / 100).toFixed(2) }}</div>
+          }
+        </div>
+      }
+    </div>
+  }
+
 </div>
   `,
   styles: [`
@@ -148,6 +166,14 @@ const IT_MO_S = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','no
     .paid-lbl{font-size:11.5px;color:var(--text-secondary);font-weight:600}
     .paid-val{font-size:20px;font-weight:800;letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums}
     .paid-count{font-size:11.5px;color:var(--text-tertiary);text-align:right}
+    .hist{margin-top:10px;display:flex;flex-direction:column}
+    .hist-row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--glass-border)}
+    .hist-row:last-child{border-bottom:none}
+    .hist-check{width:22px;height:22px;border-radius:11px;background:rgba(46,213,115,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .hist-body{flex:1;min-width:0}
+    .hist-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hist-date{font-size:11px;color:var(--text-tertiary);margin-top:1px}
+    .hist-amt{font-size:12.5px;font-weight:700;color:var(--text-secondary);font-variant-numeric:tabular-nums;flex-shrink:0}
   `],
 })
 export class DashboardComponent {
@@ -225,6 +251,19 @@ export class DashboardComponent {
     const cents = completed.reduce((s, d) => s + (d.amountCents ?? 0), 0);
     return { amount: eur(cents), count: completed.length };
   });
+
+  /** Ultimi pagamenti effettuati (ordinati per data di completamento) */
+  readonly recentPaid = computed(() =>
+    this.deadlineService.all()
+      .filter(d => d.completed)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, 8),
+  );
+
+  paidDate(d: Deadline): string {
+    const dt = new Date(d.updatedAt);
+    return `Pagata il ${dt.getDate()} ${IT_MO_S[dt.getMonth()]} ${dt.getFullYear()}`;
+  }
 }
 
 function eur(cents: number): string {
