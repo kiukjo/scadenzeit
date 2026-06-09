@@ -132,6 +132,12 @@ export const ICON_PATHS: Record<string, string> = {
     <path d="M10 17l-5-5 5-5"/>
     <path d="M5 12h12"/>`,
   heart: `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
+  chart: `
+    <path d="M3 3v17a1 1 0 0 0 1 1h17"/>
+    <path d="M7 15l3.5-4 3 2.5L19 7"/>`,
+  euro: `
+    <path d="M18 7a6 6 0 1 0 0 10"/>
+    <path d="M4 11h8M4 14h7"/>`,
   users: `
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
     <circle cx="9" cy="7" r="4"/>

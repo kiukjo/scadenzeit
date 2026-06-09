@@ -5,6 +5,8 @@ import { SettingsService } from '../../core/services/settings.service';
 import { DeadlineService } from '../../core/services/deadline.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { NotificationSchedulerService } from '../../core/services/notification-scheduler.service';
+import { BackupService } from '../../core/services/backup.service';
+import { IcsService } from '../../core/services/ics.service';
 import { DocumentService } from '../../core/services/document.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { IconComponent } from '../../shared/components/icon.component';
@@ -94,12 +96,6 @@ import { IconComponent } from '../../shared/components/icon.component';
           </div>
           <div class="sep"></div>
           <div class="row">
-            <span class="row-icon"><app-icon name="download" [size]="15" /></span>
-            <div class="row-label">Esporta dati</div>
-            <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
-          </div>
-          <div class="sep"></div>
-          <div class="row">
             <span class="row-icon"><app-icon name="book" [size]="15" /></span>
             <div class="row-label">Centro assistenza</div>
             <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
@@ -108,7 +104,7 @@ import { IconComponent } from '../../shared/components/icon.component';
           <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
             <div class="row-label">Informazioni</div>
-            <span class="row-trail">v 0.4.0</span>
+            <span class="row-trail">v 0.5.0</span>
           </div>
         </div>
       </div>
@@ -129,6 +125,35 @@ import { IconComponent } from '../../shared/components/icon.component';
         </div>
         @if (reimportToast()) {
           <p class="toast-msg">{{ reimportToast() }}</p>
+        }
+      </div>
+
+      <!-- ── Dati e backup ──────────────────────────────────────── -->
+      <div class="section-label">Dati e backup</div>
+      <div class="pad">
+        <div class="group stagger" style="--i:5">
+          <div class="row" (click)="exportBackup()">
+            <span class="row-icon"><app-icon name="download" [size]="15" /></span>
+            <div class="row-label">Esporta backup</div>
+            <span class="row-trail">.json</span>
+          </div>
+          <div class="sep"></div>
+          <div class="row" (click)="fileInput.click()">
+            <span class="row-icon"><app-icon name="refresh" [size]="15" /></span>
+            <div class="row-label">Ripristina da backup</div>
+            <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
+          </div>
+          <div class="sep"></div>
+          <div class="row" (click)="exportIcs()">
+            <span class="row-icon"><app-icon name="calendar" [size]="15" /></span>
+            <div class="row-label">Esporta nel calendario</div>
+            <span class="row-trail">.ics</span>
+          </div>
+        </div>
+        <input #fileInput type="file" accept="application/json,.json" hidden (change)="onBackupFile($event)" />
+        <p class="data-hint">Il backup include scadenze, veicoli e impostazioni. Trasferiscilo su un nuovo telefono per ritrovare tutto.</p>
+        @if (dataToast()) {
+          <p class="toast-msg">{{ dataToast() }}</p>
         }
       </div>
 
@@ -291,7 +316,8 @@ import { IconComponent } from '../../shared/components/icon.component';
     .knob.on { left: 19px; }
 
     .spin-sm{width:16px;height:16px;border-radius:50%;border:2px solid var(--glass-border);border-top-color:var(--accent);animation:scadit-spin .7s linear infinite;flex-shrink:0}
-    .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:6px 0 0;animation:scadit-fadeIn 200ms ease both}
+    .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:8px 0 0;animation:scadit-fadeIn 200ms ease both}
+    .data-hint{font-size:11.5px;color:var(--text-tertiary);line-height:1.5;margin:8px 4px 0}
 
     /* ── Logout ── */
     .logout-btn {
@@ -360,6 +386,8 @@ export class SettingsComponent {
   private readonly deadlineService = inject(DeadlineService);
   private readonly catalogService  = inject(CatalogService);
   private readonly notifScheduler  = inject(NotificationSchedulerService);
+  private readonly backupService   = inject(BackupService);
+  private readonly icsService      = inject(IcsService);
   private readonly documentService = inject(DocumentService);
   readonly         themeService    = inject(ThemeService);
   private readonly router          = inject(Router);
@@ -372,6 +400,7 @@ export class SettingsComponent {
   readonly confirmOpen    = signal(false);
   readonly isReimporting  = signal(false);
   readonly reimportToast  = signal<string | null>(null);
+  readonly dataToast      = signal<string | null>(null);
 
   readonly deadlineCount = computed(() => this.deadlineService.all().length);
   readonly documentCount = computed(() => this.documentService.all().length);
@@ -425,6 +454,64 @@ export class SettingsComponent {
     } finally {
       this.isReimporting.set(false);
     }
+  }
+
+  // ── Backup / Ripristino / Calendario ─────────────────────────
+
+  async exportBackup(): Promise<void> {
+    const json = await this.backupService.exportAll();
+    const date = new Date().toISOString().slice(0, 10);
+    this.download(`scadenzait-backup-${date}.json`, json, 'application/json');
+    this.showDataToast('✓ Backup esportato');
+  }
+
+  async onBackupFile(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const r = await this.backupService.importAll(text);
+      const tot = r.deadlines + r.vehicles + r.documents;
+      this.showDataToast(
+        tot > 0
+          ? `✓ Ripristinati: ${r.deadlines} scadenze, ${r.vehicles} veicoli, ${r.documents} documenti`
+          : '✓ Tutto già presente — nessun nuovo dato',
+      );
+    } catch (e) {
+      this.showDataToast(`⚠ ${(e as Error).message}`);
+    } finally {
+      input.value = '';
+    }
+  }
+
+  exportIcs(): void {
+    const active = this.deadlineService.all().filter((d) => !d.completed);
+    if (!active.length) {
+      this.showDataToast('Nessuna scadenza da esportare');
+      return;
+    }
+    const ics = this.icsService.buildCalendar(active);
+    const date = new Date().toISOString().slice(0, 10);
+    this.download(`scadenze-${date}.ics`, ics, 'text/calendar');
+    this.showDataToast(`✓ ${active.length} scadenze esportate`);
+  }
+
+  private download(filename: string, content: string, mime: string): void {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  private showDataToast(msg: string): void {
+    this.dataToast.set(msg);
+    setTimeout(() => this.dataToast.set(null), 4000);
   }
 
   async logout(): Promise<void> {
