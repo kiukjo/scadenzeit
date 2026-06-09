@@ -36,10 +36,15 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       <h1 class="greeting">{{ userName() }} <span class="wave">👋</span></h1>
       <p class="sub">{{ todayLabel() }}</p>
     </div>
-    <button class="bell" type="button" aria-label="Notifiche">
-      <app-icon name="bell" [size]="17" />
-      @if (hasOverdue()) { <span class="bell-dot"></span> }
-    </button>
+    <div class="hdr-actions">
+      <button class="bell" type="button" (click)="router.navigate(['/dashboard'])" aria-label="Riepilogo">
+        <app-icon name="chart" [size]="17" />
+      </button>
+      <button class="bell" type="button" aria-label="Notifiche">
+        <app-icon name="bell" [size]="17" />
+        @if (hasOverdue()) { <span class="bell-dot"></span> }
+      </button>
+    </div>
   </header>
 
   <!-- ── Stats strip ── -->
@@ -195,6 +200,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     .hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px}
     .greeting{font-size:22px;font-weight:700;letter-spacing:-.3px;margin:0}
     .sub{font-size:13px;color:var(--text-secondary);margin:2px 0 0;text-transform:capitalize}
+    .hdr-actions{display:flex;align-items:center;gap:8px}
     .bell{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-border);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;color:var(--text-primary)}
     .bell-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:4px;background:var(--danger);box-shadow:0 0 6px var(--danger);animation:scadit-badgePulse 1.6s ease-in-out infinite}
     .stats{display:flex;align-items:center;padding:0 20px 16px}
@@ -410,6 +416,8 @@ export class DeadlinesComponent {
     e.stopPropagation();
     if (d.id == null) return;
     await this.notifScheduler.cancelReminders(d);
-    await this.deadlineService.markCompleted(d.id);
+    // Segna pagata; se ricorrente, crea la prossima occorrenza
+    const next = await this.deadlineService.complete(d.id);
+    if (next) await this.notifScheduler.scheduleReminders(next);
   }
 }

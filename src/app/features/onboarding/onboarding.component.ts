@@ -126,7 +126,7 @@ export class OnboardingComponent {
     if (!this.canProceed() || this.isLoading()) return;
     this.isLoading.set(true);
     try {
-      const profile: UserProfile = { isPremium: false, profileTypes: this.selectedTypes() };
+      const profile: UserProfile = { profileTypes: this.selectedTypes() };
       await this.settingsService.saveProfile(profile);
 
       // Usa getAutoImportable: solo voci con data fissa nota (no "variable", no senza month/day)

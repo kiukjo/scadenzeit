@@ -2,9 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { from } from 'rxjs';
 import { liveQuery } from 'dexie';
+import { addYears, addMonths } from 'date-fns';
 import { DexieService } from '../../db/dexie.service';
 import { SyncQueueService } from '../../db/sync-queue.service';
-import { Deadline } from '../models';
+import { Deadline, DeadlineRecurrence } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class DeadlineService {
@@ -61,6 +62,48 @@ export class DeadlineService {
 
   async markUncompleted(id: number): Promise<void> {
     await this.update(id, { completed: false });
+  }
+
+  /**
+   * Segna una scadenza come pagata/completata.
+   * Se è ricorrente (yearly/monthly/biennial) crea automaticamente
+   * l'occorrenza successiva e la restituisce (per ri-pianificare le notifiche).
+   * Per scadenze "once"/"variable" restituisce null.
+   */
+  async complete(id: number): Promise<Deadline | null> {
+    const current = await this.getById(id);
+    if (!current) return null;
+
+    await this.markCompleted(id);
+
+    const nextDate = DeadlineService.rollDate(new Date(current.dueDate), current.recurrence);
+    if (!nextDate) return null;
+
+    const next = DeadlineService.build({
+      catalogId:   current.catalogId,
+      customName:  current.customName,
+      category:    current.category,
+      dueDate:     nextDate,
+      amountCents: current.amountCents,
+      reminders:   current.reminders,
+      recurrence:  current.recurrence,
+      completed:   false,
+      notes:       current.notes,
+      vehicleId:   current.vehicleId,
+    });
+
+    const newId = await this.add(next);
+    return (await this.getById(newId)) ?? null;
+  }
+
+  /** Calcola la data della prossima occorrenza per una ricorrenza. null se non ricorrente. */
+  private static rollDate(date: Date, recurrence: DeadlineRecurrence): Date | null {
+    switch (recurrence) {
+      case 'yearly':   return addYears(date, 1);
+      case 'biennial': return addYears(date, 2);
+      case 'monthly':  return addMonths(date, 1);
+      default:         return null; // once, variable
+    }
   }
 
   getById(id: number): Promise<Deadline | undefined> {

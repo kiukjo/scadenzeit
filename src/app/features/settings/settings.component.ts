@@ -5,10 +5,11 @@ import { SettingsService } from '../../core/services/settings.service';
 import { DeadlineService } from '../../core/services/deadline.service';
 import { CatalogService } from '../../core/services/catalog.service';
 import { NotificationSchedulerService } from '../../core/services/notification-scheduler.service';
+import { BackupService } from '../../core/services/backup.service';
+import { IcsService } from '../../core/services/ics.service';
 import { DocumentService } from '../../core/services/document.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { IconComponent } from '../../shared/components/icon.component';
-import { FREE_TIER } from '../../core/constants/free-tier.constants';
 
 @Component({
   selector: 'app-settings',
@@ -28,43 +29,30 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
             <div class="hero-name">{{ displayName() }}</div>
             <div class="hero-email">{{ user()?.email ?? '—' }}</div>
             <div class="hero-plan">
-              <span class="plan-badge">{{ isPremium() ? 'PREMIUM' : 'FREE' }}</span>
               @if (memberSince()) {
-                <span class="plan-since">· Membro da {{ memberSince() }}</span>
+                <span class="plan-since">Membro da {{ memberSince() }}</span>
               }
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ── Utilizzo ────────────────────────────────────────────── -->
-      <div class="section-label">Utilizzo</div>
+      <!-- ── Privacy ─────────────────────────────────────────────── -->
+      <div class="section-label">Privacy</div>
       <div class="pad">
-        <div class="usage-card stagger" style="--i:1">
-          <div class="usage-row">
-            <div class="usage-label">Scadenze attive</div>
-            <div class="usage-counter">
-              <span>{{ deadlineCount() }}</span>
-              <span class="mute"> / {{ isPremium() ? '∞' : maxDeadlines }}</span>
+        <div class="privacy-card stagger" style="--i:1">
+          <span class="pc-icon"><app-icon name="shield" [size]="20" color="#2ED573" /></span>
+          <div class="pc-body">
+            <div class="pc-title">I tuoi dati restano sul tuo telefono</div>
+            <div class="pc-sub">
+              Scadenze e documenti sono salvati in locale. I documenti non lasciano mai il dispositivo.
+            </div>
+            <div class="pc-stats">
+              <span><strong>{{ deadlineCount() }}</strong> scadenze</span>
+              <span class="pc-dot">·</span>
+              <span><strong>{{ documentCount() }}</strong> documenti</span>
             </div>
           </div>
-          <div class="progress">
-            <span class="bar" [style.width.%]="deadlineProgressPct()"></span>
-          </div>
-
-          @if (!isPremium()) {
-            <p class="upgrade-hint">
-              Passa a <span class="grad">PREMIUM</span> per scadenze e documenti illimitati, sync su tutti i dispositivi.
-            </p>
-            <button class="upgrade-btn shimmer" type="button"
-              (click)="showComingSoon.set(!showComingSoon())">
-              <app-icon name="sparkle" [size]="16" color="#fff" />
-              Sblocca Premium · € 2,99/mese
-            </button>
-            @if (showComingSoon()) {
-              <p class="coming-soon">🎉 Prossimamente disponibile su Google Play!</p>
-            }
-          }
         </div>
       </div>
 
@@ -108,12 +96,6 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
           </div>
           <div class="sep"></div>
           <div class="row">
-            <span class="row-icon"><app-icon name="download" [size]="15" /></span>
-            <div class="row-label">Esporta dati</div>
-            <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
-          </div>
-          <div class="sep"></div>
-          <div class="row">
             <span class="row-icon"><app-icon name="book" [size]="15" /></span>
             <div class="row-label">Centro assistenza</div>
             <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
@@ -122,7 +104,7 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
           <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
             <div class="row-label">Informazioni</div>
-            <span class="row-trail">v 0.4.0</span>
+            <span class="row-trail">v 0.5.0</span>
           </div>
         </div>
       </div>
@@ -143,6 +125,35 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
         </div>
         @if (reimportToast()) {
           <p class="toast-msg">{{ reimportToast() }}</p>
+        }
+      </div>
+
+      <!-- ── Dati e backup ──────────────────────────────────────── -->
+      <div class="section-label">Dati e backup</div>
+      <div class="pad">
+        <div class="group stagger" style="--i:5">
+          <div class="row" (click)="exportBackup()">
+            <span class="row-icon"><app-icon name="download" [size]="15" /></span>
+            <div class="row-label">Esporta backup</div>
+            <span class="row-trail">.json</span>
+          </div>
+          <div class="sep"></div>
+          <div class="row" (click)="fileInput.click()">
+            <span class="row-icon"><app-icon name="refresh" [size]="15" /></span>
+            <div class="row-label">Ripristina da backup</div>
+            <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
+          </div>
+          <div class="sep"></div>
+          <div class="row" (click)="exportIcs()">
+            <span class="row-icon"><app-icon name="calendar" [size]="15" /></span>
+            <div class="row-label">Esporta nel calendario</div>
+            <span class="row-trail">.ics</span>
+          </div>
+        </div>
+        <input #fileInput type="file" accept="application/json,.json" hidden (change)="onBackupFile($event)" />
+        <p class="data-hint">Il backup include scadenze, veicoli e impostazioni. Trasferiscilo su un nuovo telefono per ritrovare tutto.</p>
+        @if (dataToast()) {
+          <p class="toast-msg">{{ dataToast() }}</p>
         }
       </div>
 
@@ -242,54 +253,26 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
     }
     .plan-since { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
 
-    /* ── Usage card ── */
-    .usage-card {
+    /* ── Privacy card ── */
+    .privacy-card {
       border-radius: var(--radius); padding: 16px;
-      background: var(--glass); backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
+      display: flex; align-items: flex-start; gap: 12px;
+      background: linear-gradient(135deg, rgba(46,213,115,0.12), rgba(46,213,115,0.04));
+      border: 1px solid rgba(46,213,115,0.28);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
     }
-    .usage-row {
-      display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px;
+    .pc-icon {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: rgba(46,213,115,0.12); border: 1px solid rgba(46,213,115,0.30);
+      display: flex; align-items: center; justify-content: center;
     }
-    .usage-label { font-size: 13px; font-weight: 600; }
-    .usage-counter { font-size: 13px; font-family: var(--font-mono); font-weight: 700; }
-    .usage-counter .mute { color: var(--text-tertiary); }
-    .progress {
-      height: 8px; border-radius: 4px;
-      background: rgba(255,255,255,0.07); overflow: hidden;
-    }
-    [data-theme="light"] .progress { background: rgba(10,10,30,0.08); }
-    .bar {
-      display: block; height: 100%;
-      background: var(--accent-grad); border-radius: 4px;
-      box-shadow: 0 0 12px rgba(108,99,255,0.5);
-      transition: width 600ms cubic-bezier(0.2,0.8,0.2,1);
-    }
-    .upgrade-hint { font-size: 11.5px; color: var(--text-secondary); margin: 10px 0 0; }
-    .grad {
-      background: var(--accent-grad);
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent; font-weight: 700;
-    }
-    .upgrade-btn {
-      margin-top: 12px; width: 100%; padding: 12px;
-      border: none; border-radius: 14px;
-      background: var(--accent-grad); color: white;
-      font-size: 13.5px; font-weight: 700; cursor: pointer;
-      box-shadow: 0 8px 20px rgba(108,99,255,0.35);
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      font-family: inherit; position: relative; overflow: hidden;
-    }
-    .shimmer::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.28) 50%, transparent 70%);
-      background-size: 200% 100%;
-      animation: scadit-shimmer 2.8s ease-in-out infinite; pointer-events: none;
-    }
-    .coming-soon {
-      font-size: 12px; color: var(--success); text-align: center;
-      margin-top: 8px; font-weight: 600;
-    }
+    .pc-body { flex: 1; min-width: 0; }
+    .pc-title { font-size: 14px; font-weight: 700; letter-spacing: -0.1px; }
+    .pc-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; }
+    .pc-stats { font-size: 12px; color: var(--text-secondary); margin-top: 10px; }
+    .pc-stats strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .pc-dot { margin: 0 6px; color: var(--text-tertiary); }
 
     /* ── Row groups ── */
     .group {
@@ -333,7 +316,8 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
     .knob.on { left: 19px; }
 
     .spin-sm{width:16px;height:16px;border-radius:50%;border:2px solid var(--glass-border);border-top-color:var(--accent);animation:scadit-spin .7s linear infinite;flex-shrink:0}
-    .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:6px 0 0;animation:scadit-fadeIn 200ms ease both}
+    .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:8px 0 0;animation:scadit-fadeIn 200ms ease both}
+    .data-hint{font-size:11.5px;color:var(--text-tertiary);line-height:1.5;margin:8px 4px 0}
 
     /* ── Logout ── */
     .logout-btn {
@@ -402,6 +386,8 @@ export class SettingsComponent {
   private readonly deadlineService = inject(DeadlineService);
   private readonly catalogService  = inject(CatalogService);
   private readonly notifScheduler  = inject(NotificationSchedulerService);
+  private readonly backupService   = inject(BackupService);
+  private readonly icsService      = inject(IcsService);
   private readonly documentService = inject(DocumentService);
   readonly         themeService    = inject(ThemeService);
   private readonly router          = inject(Router);
@@ -412,20 +398,12 @@ export class SettingsComponent {
 
   readonly isLoggingOut   = signal(false);
   readonly confirmOpen    = signal(false);
-  readonly showComingSoon = signal(false);
   readonly isReimporting  = signal(false);
   readonly reimportToast  = signal<string | null>(null);
-
-  readonly maxDeadlines = FREE_TIER.MAX_DEADLINES;
-
-  readonly isPremium = computed(() => this.profile()?.isPremium ?? false);
+  readonly dataToast      = signal<string | null>(null);
 
   readonly deadlineCount = computed(() => this.deadlineService.all().length);
-
-  readonly deadlineProgressPct = computed(() => {
-    if (this.isPremium()) return 0;
-    return Math.min(100, (this.deadlineCount() / this.maxDeadlines) * 100);
-  });
+  readonly documentCount = computed(() => this.documentService.all().length);
 
   readonly emailShort = computed(() => {
     const email = this.user()?.email ?? '';
@@ -476,6 +454,64 @@ export class SettingsComponent {
     } finally {
       this.isReimporting.set(false);
     }
+  }
+
+  // ── Backup / Ripristino / Calendario ─────────────────────────
+
+  async exportBackup(): Promise<void> {
+    const json = await this.backupService.exportAll();
+    const date = new Date().toISOString().slice(0, 10);
+    this.download(`scadenzait-backup-${date}.json`, json, 'application/json');
+    this.showDataToast('✓ Backup esportato');
+  }
+
+  async onBackupFile(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const r = await this.backupService.importAll(text);
+      const tot = r.deadlines + r.vehicles + r.documents;
+      this.showDataToast(
+        tot > 0
+          ? `✓ Ripristinati: ${r.deadlines} scadenze, ${r.vehicles} veicoli, ${r.documents} documenti`
+          : '✓ Tutto già presente — nessun nuovo dato',
+      );
+    } catch (e) {
+      this.showDataToast(`⚠ ${(e as Error).message}`);
+    } finally {
+      input.value = '';
+    }
+  }
+
+  exportIcs(): void {
+    const active = this.deadlineService.all().filter((d) => !d.completed);
+    if (!active.length) {
+      this.showDataToast('Nessuna scadenza da esportare');
+      return;
+    }
+    const ics = this.icsService.buildCalendar(active);
+    const date = new Date().toISOString().slice(0, 10);
+    this.download(`scadenze-${date}.ics`, ics, 'text/calendar');
+    this.showDataToast(`✓ ${active.length} scadenze esportate`);
+  }
+
+  private download(filename: string, content: string, mime: string): void {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  private showDataToast(msg: string): void {
+    this.dataToast.set(msg);
+    setTimeout(() => this.dataToast.set(null), 4000);
   }
 
   async logout(): Promise<void> {
