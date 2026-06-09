@@ -8,7 +8,6 @@ import { NotificationSchedulerService } from '../../core/services/notification-s
 import { DocumentService } from '../../core/services/document.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { IconComponent } from '../../shared/components/icon.component';
-import { FREE_TIER } from '../../core/constants/free-tier.constants';
 
 @Component({
   selector: 'app-settings',
@@ -28,43 +27,30 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
             <div class="hero-name">{{ displayName() }}</div>
             <div class="hero-email">{{ user()?.email ?? '—' }}</div>
             <div class="hero-plan">
-              <span class="plan-badge">{{ isPremium() ? 'PREMIUM' : 'FREE' }}</span>
               @if (memberSince()) {
-                <span class="plan-since">· Membro da {{ memberSince() }}</span>
+                <span class="plan-since">Membro da {{ memberSince() }}</span>
               }
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ── Utilizzo ────────────────────────────────────────────── -->
-      <div class="section-label">Utilizzo</div>
+      <!-- ── Privacy ─────────────────────────────────────────────── -->
+      <div class="section-label">Privacy</div>
       <div class="pad">
-        <div class="usage-card stagger" style="--i:1">
-          <div class="usage-row">
-            <div class="usage-label">Scadenze attive</div>
-            <div class="usage-counter">
-              <span>{{ deadlineCount() }}</span>
-              <span class="mute"> / {{ isPremium() ? '∞' : maxDeadlines }}</span>
+        <div class="privacy-card stagger" style="--i:1">
+          <span class="pc-icon"><app-icon name="shield" [size]="20" color="#2ED573" /></span>
+          <div class="pc-body">
+            <div class="pc-title">I tuoi dati restano sul tuo telefono</div>
+            <div class="pc-sub">
+              Scadenze e documenti sono salvati in locale. I documenti non lasciano mai il dispositivo.
+            </div>
+            <div class="pc-stats">
+              <span><strong>{{ deadlineCount() }}</strong> scadenze</span>
+              <span class="pc-dot">·</span>
+              <span><strong>{{ documentCount() }}</strong> documenti</span>
             </div>
           </div>
-          <div class="progress">
-            <span class="bar" [style.width.%]="deadlineProgressPct()"></span>
-          </div>
-
-          @if (!isPremium()) {
-            <p class="upgrade-hint">
-              Passa a <span class="grad">PREMIUM</span> per scadenze e documenti illimitati, sync su tutti i dispositivi.
-            </p>
-            <button class="upgrade-btn shimmer" type="button"
-              (click)="showComingSoon.set(!showComingSoon())">
-              <app-icon name="sparkle" [size]="16" color="#fff" />
-              Sblocca Premium · € 2,99/mese
-            </button>
-            @if (showComingSoon()) {
-              <p class="coming-soon">🎉 Prossimamente disponibile su Google Play!</p>
-            }
-          }
         </div>
       </div>
 
@@ -242,54 +228,26 @@ import { FREE_TIER } from '../../core/constants/free-tier.constants';
     }
     .plan-since { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
 
-    /* ── Usage card ── */
-    .usage-card {
+    /* ── Privacy card ── */
+    .privacy-card {
       border-radius: var(--radius); padding: 16px;
-      background: var(--glass); backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
+      display: flex; align-items: flex-start; gap: 12px;
+      background: linear-gradient(135deg, rgba(46,213,115,0.12), rgba(46,213,115,0.04));
+      border: 1px solid rgba(46,213,115,0.28);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
     }
-    .usage-row {
-      display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px;
+    .pc-icon {
+      width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+      background: rgba(46,213,115,0.12); border: 1px solid rgba(46,213,115,0.30);
+      display: flex; align-items: center; justify-content: center;
     }
-    .usage-label { font-size: 13px; font-weight: 600; }
-    .usage-counter { font-size: 13px; font-family: var(--font-mono); font-weight: 700; }
-    .usage-counter .mute { color: var(--text-tertiary); }
-    .progress {
-      height: 8px; border-radius: 4px;
-      background: rgba(255,255,255,0.07); overflow: hidden;
-    }
-    [data-theme="light"] .progress { background: rgba(10,10,30,0.08); }
-    .bar {
-      display: block; height: 100%;
-      background: var(--accent-grad); border-radius: 4px;
-      box-shadow: 0 0 12px rgba(108,99,255,0.5);
-      transition: width 600ms cubic-bezier(0.2,0.8,0.2,1);
-    }
-    .upgrade-hint { font-size: 11.5px; color: var(--text-secondary); margin: 10px 0 0; }
-    .grad {
-      background: var(--accent-grad);
-      -webkit-background-clip: text; background-clip: text;
-      color: transparent; font-weight: 700;
-    }
-    .upgrade-btn {
-      margin-top: 12px; width: 100%; padding: 12px;
-      border: none; border-radius: 14px;
-      background: var(--accent-grad); color: white;
-      font-size: 13.5px; font-weight: 700; cursor: pointer;
-      box-shadow: 0 8px 20px rgba(108,99,255,0.35);
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      font-family: inherit; position: relative; overflow: hidden;
-    }
-    .shimmer::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.28) 50%, transparent 70%);
-      background-size: 200% 100%;
-      animation: scadit-shimmer 2.8s ease-in-out infinite; pointer-events: none;
-    }
-    .coming-soon {
-      font-size: 12px; color: var(--success); text-align: center;
-      margin-top: 8px; font-weight: 600;
-    }
+    .pc-body { flex: 1; min-width: 0; }
+    .pc-title { font-size: 14px; font-weight: 700; letter-spacing: -0.1px; }
+    .pc-sub { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-top: 4px; }
+    .pc-stats { font-size: 12px; color: var(--text-secondary); margin-top: 10px; }
+    .pc-stats strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .pc-dot { margin: 0 6px; color: var(--text-tertiary); }
 
     /* ── Row groups ── */
     .group {
@@ -412,20 +370,11 @@ export class SettingsComponent {
 
   readonly isLoggingOut   = signal(false);
   readonly confirmOpen    = signal(false);
-  readonly showComingSoon = signal(false);
   readonly isReimporting  = signal(false);
   readonly reimportToast  = signal<string | null>(null);
 
-  readonly maxDeadlines = FREE_TIER.MAX_DEADLINES;
-
-  readonly isPremium = computed(() => this.profile()?.isPremium ?? false);
-
   readonly deadlineCount = computed(() => this.deadlineService.all().length);
-
-  readonly deadlineProgressPct = computed(() => {
-    if (this.isPremium()) return 0;
-    return Math.min(100, (this.deadlineCount() / this.maxDeadlines) * 100);
-  });
+  readonly documentCount = computed(() => this.documentService.all().length);
 
   readonly emailShort = computed(() => {
     const email = this.user()?.email ?? '';

@@ -3,17 +3,12 @@ import { Router } from '@angular/router';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { DocumentService } from '../../../core/services/document.service';
-import { SupabaseService } from '../../../core/services/supabase.service';
-import { SupabaseAuthService } from '../../../core/services/supabase-auth.service';
-import { SettingsService } from '../../../core/services/settings.service';
-import { PremiumGateComponent } from '../../../shared/components/premium-gate.component';
-import { FREE_TIER } from '../../../core/constants/free-tier.constants';
 
-type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
+type UploadState = 'idle' | 'capturing' | 'saving' | 'error';
 
 @Component({
   selector: 'app-document-upload',
-  imports: [PremiumGateComponent],
+  imports: [],
   template: `
     <div class="page">
       <div class="backdrop" (click)="goBack()"></div>
@@ -31,10 +26,7 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
 
         <div class="body">
 
-          @if (isAtLimit()) {
-            <app-premium-gate type="documents" />
-
-          } @else if (state() === 'idle') {
+          @if (state() === 'idle') {
 
             <div class="sec-label">Nome documento *</div>
             <div class="field">
@@ -64,6 +56,11 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
                 </svg>
                 Dalla galleria
               </button>
+            </div>
+
+            <div class="privacy-note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+              I documenti restano <strong>solo sul tuo telefono</strong>. Non vengono mai caricati su alcun server.
             </div>
 
           } @else if (state() === 'error') {
@@ -102,6 +99,9 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
     .capture-btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .capture-btn.accent { background: rgba(108,99,255,0.10); border-color: rgba(108,99,255,0.30); color: var(--accent); }
     .capture-btn.ghost { background: var(--glass); border-color: var(--glass-border); color: var(--text-secondary); }
+    .privacy-note { display: flex; align-items: flex-start; gap: 8px; margin-top: 16px; padding: 12px 14px; border-radius: 12px; background: rgba(46,213,115,0.07); border: 1px solid rgba(46,213,115,0.22); color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+    .privacy-note svg { color: var(--success); flex-shrink: 0; margin-top: 1px; }
+    .privacy-note strong { color: var(--text-primary); }
     .err-box { padding: 20px; background: rgba(255,71,87,0.07); border: 1px solid rgba(255,71,87,0.25); border-radius: var(--radius); text-align: center; margin-top: 8px; }
     .err-msg { color: var(--danger); font-size: 13.5px; margin-bottom: 14px; line-height: 1.5; }
     .btn-retry { padding: 10px 24px; border-radius: 100px; background: var(--glass); border: 1px solid var(--glass-border); color: var(--text-secondary); cursor: pointer; font-size: 13px; font-weight: 600; font-family: inherit; }
@@ -112,15 +112,7 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'uploading' | 'error';
 })
 export class DocumentUploadComponent {
   private readonly documentService = inject(DocumentService);
-  private readonly supabase        = inject(SupabaseService).client;
-  private readonly authService     = inject(SupabaseAuthService);
-  private readonly settingsService = inject(SettingsService);
   private readonly router          = inject(Router);
-
-  readonly isAtLimit = computed(() => {
-    if (this.settingsService.profile()?.isPremium) return false;
-    return this.documentService.all().length >= FREE_TIER.MAX_DOCUMENTS;
-  });
 
   readonly state        = signal<UploadState>('idle');
   readonly filename     = signal('');
@@ -133,7 +125,6 @@ export class DocumentUploadComponent {
     switch (this.state()) {
       case 'capturing': return 'Acquisizione foto…';
       case 'saving':    return 'Salvataggio locale…';
-      case 'uploading': return 'Upload su cloud…';
       default:          return '';
     }
   });
@@ -157,6 +148,7 @@ export class DocumentUploadComponent {
 
       this.state.set('saving');
 
+      // ── Salvataggio SOLO locale (nessun upload su server) ──
       const destName = `doc_${Date.now()}.jpg`;
       await Filesystem.copy({
         from: photo.path ?? photo.webPath!,
@@ -175,19 +167,7 @@ export class DocumentUploadComponent {
         notes:     this.notes().trim() || undefined,
       });
 
-      const docId  = await this.documentService.add(doc);
-      const userId = this.authService.user()?.id;
-
-      if (userId && photo.webPath) {
-        try {
-          this.state.set('uploading');
-          const storagePath = await this.uploadToStorage(userId, doc.uuid, photo.webPath);
-          await this.documentService.update(docId, { r2Key: storagePath });
-        } catch {
-          console.warn('Upload Supabase Storage fallito — documento salvato solo in locale');
-        }
-      }
-
+      await this.documentService.add(doc);
       await this.router.navigate(['/documents']);
     } catch (err) {
       const msg = (err as Error).message ?? '';
@@ -198,19 +178,6 @@ export class DocumentUploadComponent {
       this.errorMessage.set(`Errore: ${msg}`);
       this.state.set('error');
     }
-  }
-
-  private async uploadToStorage(userId: string, docUuid: string, webPath: string): Promise<string> {
-    const response    = await fetch(webPath);
-    const blob        = await response.blob();
-    const storagePath = `${userId}/${docUuid}.jpg`;
-
-    const { error } = await this.supabase.storage
-      .from('documents')
-      .upload(storagePath, blob, { contentType: 'image/jpeg', upsert: true });
-
-    if (error) throw new Error(error.message);
-    return storagePath;
   }
 
   goBack(): void {

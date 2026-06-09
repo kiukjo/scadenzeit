@@ -5,11 +5,8 @@ import { VehicleService } from '../../../core/services/vehicle.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { DeadlineFormService } from '../../../core/services/deadline-form.service';
 import { NotificationSchedulerService } from '../../../core/services/notification-scheduler.service';
-import { SettingsService } from '../../../core/services/settings.service';
 import { DeadlineCategory, DeadlineRecurrence } from '../../../core/models';
-import { PremiumGateComponent } from '../../../shared/components/premium-gate.component';
 import { IconComponent } from '../../../shared/components/icon.component';
-import { FREE_TIER } from '../../../core/constants/free-tier.constants';
 
 interface CategoryOpt { value: DeadlineCategory; label: string; icon: string; }
 
@@ -37,7 +34,7 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
 
 @Component({
   selector: 'app-deadline-form',
-  imports: [PremiumGateComponent, IconComponent],
+  imports: [IconComponent],
   template: `
     <div class="page">
       <!-- Top safe-area tap target -->
@@ -53,11 +50,6 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
           <span style="width:60px"></span>
         </header>
 
-        @if (isAtLimit()) {
-          <div style="padding:0 18px">
-            <app-premium-gate type="deadlines" />
-          </div>
-        } @else {
           <div class="body">
 
             <!-- Preset banner -->
@@ -246,7 +238,6 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
               }
             </button>
           </div>
-        }
       </div>
     </div>
   `,
@@ -443,7 +434,6 @@ export class DeadlineFormComponent {
   private readonly catalogService  = inject(CatalogService);
   private readonly formService     = inject(DeadlineFormService);
   private readonly notifScheduler  = inject(NotificationSchedulerService);
-  private readonly settingsService = inject(SettingsService);
   private readonly router          = inject(Router);
   private readonly route           = inject(ActivatedRoute);
   readonly vehicleService          = inject(VehicleService);
@@ -531,12 +521,6 @@ export class DeadlineFormComponent {
   }
 
   // ── Derived ───────────────────────────────────────────────────
-
-  readonly isAtLimit = computed(() => {
-    if (this.isEditMode()) return false;  // Mai bloccare in modifica
-    if (this.settingsService.profile()?.isPremium) return false;
-    return this.deadlineService.all().length >= FREE_TIER.MAX_DEADLINES;
-  });
 
   readonly preset = computed(() => this.formService.suggestPreset(this.name()));
 
