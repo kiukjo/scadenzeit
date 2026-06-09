@@ -9,15 +9,17 @@ import { SupabaseAuthService } from './core/services/supabase-auth.service';
 import { SyncService } from './core/services/sync.service';
 import { ThemeService } from './core/services/theme.service';
 import { NavComponent } from './shared/components/nav.component';
+import { ToastComponent } from './shared/components/toast.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavComponent],
+  imports: [RouterOutlet, NavComponent, ToastComponent],
   template: `
     <router-outlet />
     @if (showNav()) {
       <app-nav />
     }
+    <app-toast />
   `,
 })
 export class App implements OnInit {

@@ -135,6 +135,9 @@ export const ICON_PATHS: Record<string, string> = {
   chart: `
     <path d="M3 3v17a1 1 0 0 0 1 1h17"/>
     <path d="M7 15l3.5-4 3 2.5L19 7"/>`,
+  search: `
+    <circle cx="11" cy="11" r="7"/>
+    <path d="M21 21l-4.3-4.3"/>`,
   euro: `
     <path d="M18 7a6 6 0 1 0 0 10"/>
     <path d="M4 11h8M4 14h7"/>`,
