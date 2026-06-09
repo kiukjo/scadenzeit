@@ -1,5 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { DeadlineService } from '../../../core/services/deadline.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { CatalogService } from '../../../core/services/catalog.service';
@@ -49,7 +49,7 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
 
         <header class="head">
           <button type="button" class="cancel-btn" (click)="goBack()">Annulla</button>
-          <div class="title">Nuova scadenza</div>
+          <div class="title">{{ isEditMode() ? 'Modifica scadenza' : 'Nuova scadenza' }}</div>
           <span style="width:60px"></span>
         </header>
 
@@ -242,7 +242,7 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
                   Salvataggio…
                 </span>
               } @else {
-                Salva scadenza
+                {{ isEditMode() ? 'Aggiorna scadenza' : 'Salva scadenza' }}
               }
             </button>
           </div>
@@ -445,7 +445,12 @@ export class DeadlineFormComponent {
   private readonly notifScheduler  = inject(NotificationSchedulerService);
   private readonly settingsService = inject(SettingsService);
   private readonly router          = inject(Router);
+  private readonly route           = inject(ActivatedRoute);
   readonly vehicleService          = inject(VehicleService);
+
+  // ── Edit mode ─────────────────────────────────────────────────
+  readonly editId     = signal<number | null>(null);
+  readonly isEditMode = computed(() => this.editId() !== null);
 
   // ── Form state ────────────────────────────────────────────────
   readonly name         = signal('');
@@ -468,6 +473,17 @@ export class DeadlineFormComponent {
   readonly reminderOptions = REMINDER_OPTIONS;
 
   constructor() {
+    // ── Edit mode: carica deadline esistente ──
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      const id = parseInt(idParam, 10);
+      if (!isNaN(id)) {
+        this.editId.set(id);
+        void this.loadDeadline(id);
+      }
+    }
+
+    // ── Create mode: pre-popola da history.state (scan/preset) ──
     const state = history.state as {
       draft?: Partial<{
         customName: string;
@@ -479,7 +495,7 @@ export class DeadlineFormComponent {
       }>
     };
     const draft = state?.draft;
-    if (draft) {
+    if (draft && !idParam) {
       if (draft.customName) this.name.set(draft.customName);
       if (draft.category)   this.category.set(draft.category);
       if (draft.recurrence) this.recurrence.set(draft.recurrence);
@@ -497,9 +513,27 @@ export class DeadlineFormComponent {
     }
   }
 
+  private async loadDeadline(id: number): Promise<void> {
+    const d = await this.deadlineService.getById(id);
+    if (!d) return;
+    this.name.set(d.customName);
+    this.category.set(d.category);
+    this.recurrence.set(d.recurrence);
+    this.notes.set(d.notes ?? '');
+    this.reminderDays.set(d.reminders?.length ? d.reminders : [7, 1]);
+    if (d.amountCents && d.amountCents > 0) this.amountStr.set((d.amountCents / 100).toFixed(2));
+    if (d.vehicleId) this.vehicleId.set(d.vehicleId);
+    const date = new Date(d.dueDate);
+    if (!isNaN(date.getTime())) {
+      this.selectedDate.set(date);
+      this.calMonthSig.set(new Date(date.getFullYear(), date.getMonth(), 1));
+    }
+  }
+
   // ── Derived ───────────────────────────────────────────────────
 
   readonly isAtLimit = computed(() => {
+    if (this.isEditMode()) return false;  // Mai bloccare in modifica
     if (this.settingsService.profile()?.isPremium) return false;
     return this.deadlineService.all().length >= FREE_TIER.MAX_DEADLINES;
   });
@@ -608,21 +642,32 @@ export class DeadlineFormComponent {
     if (!this.isValid() || this.isSaving() || !date) return;
     this.isSaving.set(true);
     try {
-      const deadline = DeadlineService.build({
+      const changes = {
         customName:  this.name().trim(),
         category:    this.category(),
         dueDate:     date,
         amountCents: this.amountCents(),
         recurrence:  this.recurrence(),
         reminders:   this.reminderDays().length > 0 ? this.reminderDays() : [7, 1],
-        completed:   false,
         notes:       this.notes().trim() || undefined,
         vehicleId:   this.vehicleId() ?? undefined,
-      });
+      };
 
-      const id    = await this.deadlineService.add(deadline);
-      const saved = await this.deadlineService.getById(id);
-      if (saved) await this.notifScheduler.scheduleReminders(saved);
+      if (this.isEditMode()) {
+        // ── Aggiorna scadenza esistente ──
+        await this.deadlineService.update(this.editId()!, changes);
+        const saved = await this.deadlineService.getById(this.editId()!);
+        if (saved) {
+          await this.notifScheduler.cancelReminders(saved);
+          await this.notifScheduler.scheduleReminders(saved);
+        }
+      } else {
+        // ── Crea nuova scadenza ──
+        const deadline = DeadlineService.build({ ...changes, completed: false });
+        const id    = await this.deadlineService.add(deadline);
+        const saved = await this.deadlineService.getById(id);
+        if (saved) await this.notifScheduler.scheduleReminders(saved);
+      }
 
       await this.router.navigate(['/deadlines']);
     } finally {
