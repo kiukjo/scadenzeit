@@ -29,7 +29,7 @@
     "month": 1,
     "day": 31,
     "reminders": [30, 15, 7],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
     "notes": "Dichiarazione Sostitutiva Unica — valida 12 mesi dal rilascio. Rinnovare entro gennaio per non perdere bonus e agevolazioni"
   },
   {
@@ -62,7 +62,7 @@
     "month": 6,
     "day": 30,
     "reminders": [30, 15, 7],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
     "notes": "Scadenza indicativa — varia per comune. Aggiornare la data reale dalla bolletta"
   },
   {
@@ -194,7 +194,7 @@
     "month": 1,
     "day": 31,
     "reminders": [30, 15, 7],
-    "appliesTo": ["dipendente", "autonomo", "proprietario_casa"],
+    "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
     "notes": "Addebitato sulla bolletta elettrica in 10 rate (gen-ott). Se non addebitato, versare tramite F24 entro il 31 gennaio"
   },
   {
@@ -267,7 +267,7 @@
     "month": 12,
     "day": 31,
     "reminders": [30, 15],
-    "appliesTo": ["dipendente", "autonomo"],
+    "appliesTo": ["dipendente", "autonomo", "genitore"],
     "notes": "L'esenzione per reddito va rinnovata ogni anno con autocertificazione al medico di base"
   },
   {
@@ -388,5 +388,78 @@
     "reminders": [3, 1],
     "appliesTo": ["autonomo"],
     "notes": "Emissione fatture elettroniche entro il 15 del mese successivo all'operazione (regime ordinario)"
+  },
+  {
+    "id": "iscrizioni_scolastiche",
+    "name": "Iscrizioni scolastiche online (MIUR)",
+    "category": "famiglia",
+    "recurrence": "yearly",
+    "month": 1,
+    "day": 30,
+    "reminders": [30, 15, 7],
+    "appliesTo": ["genitore"],
+    "notes": "Iscrizioni online scuola dell'infanzia, primaria, secondaria di I e II grado su scuola.gov.it — apertura indicativa seconda settimana di gennaio"
+  },
+  {
+    "id": "assegno_unico_rinnovo",
+    "name": "Rinnovo Assegno Unico Universale",
+    "category": "famiglia",
+    "recurrence": "yearly",
+    "month": 2,
+    "day": 28,
+    "reminders": [30, 15, 7],
+    "appliesTo": ["genitore"],
+    "notes": "Rinnovare la domanda INPS ogni anno entro febbraio per non perdere gli arretrati. Richiede ISEE aggiornato. Per figli fino a 21 anni (senza limiti per figli disabili)"
+  },
+  {
+    "id": "mensa_scolastica",
+    "name": "Iscrizione mensa scolastica",
+    "category": "famiglia",
+    "recurrence": "yearly",
+    "month": 9,
+    "day": 15,
+    "reminders": [30, 15, 7],
+    "appliesTo": ["genitore"],
+    "notes": "Iscrizione al servizio mensa per l'anno scolastico — scadenza orientativa, verificare le date del proprio comune"
+  },
+  {
+    "id": "contributi_scolastici",
+    "name": "Contributi scolastici anno scolastico",
+    "category": "famiglia",
+    "recurrence": "yearly",
+    "month": 9,
+    "day": 30,
+    "reminders": [30, 15, 7],
+    "appliesTo": ["genitore"],
+    "notes": "Tasse e contributi scolastici per scuole medie e superiori — verificare la data precisa comunicata dall'istituto"
+  },
+  {
+    "id": "bonus_asilo_nido",
+    "name": "Bonus asilo nido INPS",
+    "category": "famiglia",
+    "recurrence": "yearly",
+    "month": 12,
+    "day": 31,
+    "reminders": [60, 30, 15],
+    "appliesTo": ["genitore"],
+    "notes": "Domanda INPS per il contributo sulle rette dell'asilo nido (fino a €3.000/anno in base all'ISEE). Presentare la domanda entro il 31 dicembre dell'anno di riferimento"
+  },
+  {
+    "id": "vaccinazioni_bambini",
+    "name": "Vaccinazioni obbligatorie bambini",
+    "category": "famiglia",
+    "recurrence": "variable",
+    "reminders": [60, 30, 15],
+    "appliesTo": ["genitore"],
+    "notes": "Calendario vaccinale obbligatorio — inserire la data del prossimo richiamo indicata dal pediatra. Obbligatorie per iscrizione a nido e scuola dell'infanzia"
+  },
+  {
+    "id": "visita_pediatrica",
+    "name": "Visita pediatrica annuale",
+    "category": "famiglia",
+    "recurrence": "variable",
+    "reminders": [30, 15],
+    "appliesTo": ["genitore"],
+    "notes": "Bilancio di salute annuale con il pediatra di base — inserire la data concordata"
   }
 ]
