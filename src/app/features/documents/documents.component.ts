@@ -2,9 +2,11 @@ import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Filesystem } from '@capacitor/filesystem';
 import { DocumentService } from '../../core/services/document.service';
+import { ToastService, haptic } from '../../core/services/toast.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state.component';
 import { ItalianDatePipe } from '../../shared/pipes/italian-date.pipe';
 import { IconComponent } from '../../shared/components/icon.component';
+import { Document } from '../../core/models';
 
 @Component({
   selector: 'app-documents',
@@ -49,10 +51,8 @@ import { IconComponent } from '../../shared/components/icon.component';
                   </span>
                 </div>
 
-                <!-- Badge -->
-                <span class="badge" [class.cloud]="!!doc.r2Key">
-                  {{ doc.r2Key ? '☁' : '📱' }}
-                </span>
+                <!-- Badge: sempre locale -->
+                <span class="badge" title="Salvato sul dispositivo">📱</span>
 
                 <!-- Actions -->
                 <div class="actions">
@@ -64,7 +64,7 @@ import { IconComponent } from '../../shared/components/icon.component';
                       </svg>
                     </button>
                   }
-                  <button class="icon-btn danger" type="button" (click)="remove(doc.id!)">
+                  <button class="icon-btn danger" type="button" (click)="remove(doc)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6l-1 14H6L5 6"/>
@@ -102,6 +102,7 @@ import { IconComponent } from '../../shared/components/icon.component';
 })
 export class DocumentsComponent {
   private readonly documentService = inject(DocumentService);
+  private readonly toast           = inject(ToastService);
 
   readonly documents = this.documentService.all;
 
@@ -109,16 +110,36 @@ export class DocumentsComponent {
     window.open(path, '_blank');
   }
 
-  async remove(id: number): Promise<void> {
-    const doc = await this.documentService.getById(id);
-    if (doc?.localPath && !doc.r2Key) {
-      try {
-        await Filesystem.deleteFile({ path: doc.localPath });
-      } catch {
-        // File già rimosso — ignora
+  async remove(doc: Document): Promise<void> {
+    if (doc.id == null) return;
+    haptic([10, 30, 10]);
+
+    // Rimuove subito il record; il file su disco viene cancellato solo
+    // allo scadere dello snackbar (così l'undo può ripristinarlo).
+    await this.documentService.remove(doc.id);
+    const { id: _omit, ...snapshot } = doc;
+    let undone = false;
+
+    this.toast.show('Documento eliminato', {
+      variant: 'danger',
+      actionLabel: 'Annulla',
+      duration: 5000,
+      action: async () => {
+        undone = true;
+        await this.documentService.add(snapshot);
+      },
+    });
+
+    setTimeout(async () => {
+      if (undone) return;
+      if (doc.localPath) {
+        try {
+          await Filesystem.deleteFile({ path: doc.localPath });
+        } catch {
+          // file già assente — ignora
+        }
       }
-    }
-    await this.documentService.remove(id);
+    }, 5200);
   }
 
   formatSize(bytes: number): string {

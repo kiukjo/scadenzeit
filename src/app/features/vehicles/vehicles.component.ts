@@ -2,6 +2,8 @@ import { Component, inject, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { DeadlineService } from '../../core/services/deadline.service';
+import { NotificationSchedulerService } from '../../core/services/notification-scheduler.service';
+import { ToastService, haptic } from '../../core/services/toast.service';
 import { IconComponent } from '../../shared/components/icon.component';
 import { Vehicle } from '../../core/models';
 
@@ -78,7 +80,7 @@ const TILE_COLORS = ['#6C63FF', '#3B82F6', '#2ED573', '#FFA502', '#FF6B81', '#7B
                 </span>
                 <div class="card-actions">
                   <button class="icon-btn danger" type="button"
-                    (click)="remove(v.vehicle.id!); $event.stopPropagation()">
+                    (click)="remove(v.vehicle, $event)">
                     <app-icon name="trash" [size]="16" />
                   </button>
                   <app-icon name="chevronRight" [size]="18" />
@@ -230,6 +232,8 @@ const TILE_COLORS = ['#6C63FF', '#3B82F6', '#2ED573', '#FFA502', '#FF6B81', '#7B
 export class VehiclesComponent {
   private readonly vehicleService  = inject(VehicleService);
   private readonly deadlineService = inject(DeadlineService);
+  private readonly notifScheduler  = inject(NotificationSchedulerService);
+  private readonly toast           = inject(ToastService);
   private readonly router          = inject(Router);
 
   readonly vehicles = this.vehicleService.all;
@@ -259,7 +263,39 @@ export class VehiclesComponent {
     this.router.navigate(['/vehicles/new']);
   }
 
-  async remove(id: number): Promise<void> {
-    await this.vehicleService.remove(id);
+  async remove(v: Vehicle, e: Event): Promise<void> {
+    e.stopPropagation();
+    if (v.id == null) return;
+    haptic([10, 30, 10]);
+
+    // Cancella a cascata le scadenze collegate al veicolo
+    const related = this.deadlineService.all().filter((d) => d.vehicleId === v.uuid);
+    for (const d of related) {
+      await this.notifScheduler.cancelReminders(d);
+      if (d.id != null) await this.deadlineService.remove(d.id);
+    }
+    await this.vehicleService.remove(v.id);
+
+    // Snapshot per il ripristino (senza id)
+    const { id: _vid, ...vSnap } = v;
+    const dSnaps = related.map(({ id: _id, ...rest }) => rest);
+
+    this.toast.show(
+      related.length > 0
+        ? `Veicolo e ${related.length} scadenze eliminati`
+        : 'Veicolo eliminato',
+      {
+        variant: 'danger',
+        actionLabel: 'Annulla',
+        action: async () => {
+          await this.vehicleService.add(vSnap);
+          for (const ds of dSnaps) {
+            const id = await this.deadlineService.add(ds);
+            const saved = await this.deadlineService.getById(id);
+            if (saved) await this.notifScheduler.scheduleReminders(saved);
+          }
+        },
+      },
+    );
   }
 }
