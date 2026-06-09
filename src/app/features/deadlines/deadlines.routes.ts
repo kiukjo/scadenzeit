@@ -20,4 +20,11 @@ export const DEADLINES_ROUTES: Routes = [
         (m) => m.DeadlineFormComponent,
       ),
   },
+  {
+    path: 'catalog',
+    loadComponent: () =>
+      import('./catalog-picker/catalog-picker.component').then(
+        (m) => m.CatalogPickerComponent,
+      ),
+  },
 ];

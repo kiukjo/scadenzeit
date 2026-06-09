@@ -442,6 +442,9 @@ export class DeadlineFormComponent {
   readonly editId     = signal<number | null>(null);
   readonly isEditMode = computed(() => this.editId() !== null);
 
+  /** catalogId ereditato da una voce di catalogo a data variabile (create mode) */
+  private draftCatalogId: string | undefined;
+
   // ── Form state ────────────────────────────────────────────────
   readonly name         = signal('');
   readonly category     = signal<DeadlineCategory>('fisco');
@@ -473,7 +476,7 @@ export class DeadlineFormComponent {
       }
     }
 
-    // ── Create mode: pre-popola da history.state (scan/preset) ──
+    // ── Create mode: pre-popola da history.state (scan/preset/catalogo) ──
     const state = history.state as {
       draft?: Partial<{
         customName: string;
@@ -482,6 +485,7 @@ export class DeadlineFormComponent {
         category: DeadlineCategory;
         recurrence: DeadlineRecurrence;
         notes: string;
+        catalogId: string;
       }>
     };
     const draft = state?.draft;
@@ -490,6 +494,7 @@ export class DeadlineFormComponent {
       if (draft.category)   this.category.set(draft.category);
       if (draft.recurrence) this.recurrence.set(draft.recurrence);
       if (draft.notes)      this.notes.set(draft.notes);
+      if (draft.catalogId)  this.draftCatalogId = draft.catalogId;
       if (draft.dueDate) {
         const d = draft.dueDate instanceof Date ? draft.dueDate : new Date(draft.dueDate);
         if (!isNaN(d.getTime())) {
@@ -646,8 +651,12 @@ export class DeadlineFormComponent {
           await this.notifScheduler.scheduleReminders(saved);
         }
       } else {
-        // ── Crea nuova scadenza ──
-        const deadline = DeadlineService.build({ ...changes, completed: false });
+        // ── Crea nuova scadenza (eredita catalogId se proviene dal catalogo) ──
+        const deadline = DeadlineService.build({
+          ...changes,
+          completed: false,
+          catalogId: this.draftCatalogId,
+        });
         const id    = await this.deadlineService.add(deadline);
         const saved = await this.deadlineService.getById(id);
         if (saved) await this.notifScheduler.scheduleReminders(saved);

@@ -4,6 +4,7 @@ import { DeadlineService } from '../../core/services/deadline.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { NotificationSchedulerService } from '../../core/services/notification-scheduler.service';
+import { ToastService, haptic } from '../../core/services/toast.service';
 import { IconComponent } from '../../shared/components/icon.component';
 import { Deadline, DeadlineCategory } from '../../core/models';
 
@@ -99,7 +100,8 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       <div class="empty">
         <span class="eico">📋</span>
         <div class="etitle">Nessuna scadenza automatica</div>
-        <div class="esub">Importate automaticamente in base al profilo selezionato durante l'accesso.</div>
+        <div class="esub">Aggiungi le scadenze standard italiane (IMU, 730, bollo…) scegliendole dal catalogo.</div>
+        <button class="ghost-btn" (click)="router.navigate(['/deadlines/catalog'])">Sfoglia il catalogo →</button>
       </div>
     }
     @for (g of autoGroups(); track g.cat; let gi = $index) {
@@ -161,12 +163,11 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     </div>
   }
 
-  <!-- FAB solo nel tab Manuali quando ci sono scadenze -->
-  @if (activeTab() === 'manuali' && manualList().length > 0) {
-    <button class="fab" (click)="openAdd()" aria-label="Aggiungi scadenza">
-      <app-icon name="plus" [size]="22" color="#fff" [strokeWidth]="2.5"/>
-    </button>
-  }
+  <!-- FAB adattivo: aggiunge in base al tab attivo -->
+  <button class="fab" (click)="onFabClick()" [attr.aria-label]="fabLabel()">
+    <app-icon name="plus" [size]="22" color="#fff" [strokeWidth]="2.5"/>
+  </button>
+
 
 </div>
 <!-- ── Card template riusabile ── -->
@@ -261,6 +262,7 @@ export class DeadlinesComponent {
   private readonly vehicleService  = inject(VehicleService);
   private readonly settings        = inject(SettingsService);
   private readonly notifScheduler  = inject(NotificationSchedulerService);
+  private readonly toast           = inject(ToastService);
 
   readonly swipedId  = signal<number | null>(null);
   readonly activeTab = signal<TabKey>('auto');
@@ -399,12 +401,42 @@ export class DeadlinesComponent {
     e.stopPropagation();
     this.swipedId.set(null);
     if (d.id == null) return;
+    haptic([10, 30, 10]);
     await this.notifScheduler.cancelReminders(d);
     await this.deadlineService.remove(d.id);
+
+    // Snapshot per il ripristino (senza id: ne riceverà uno nuovo)
+    const { id: _omit, ...snapshot } = d;
+    this.toast.show('Scadenza eliminata', {
+      variant: 'danger',
+      actionLabel: 'Annulla',
+      action: async () => {
+        const newId = await this.deadlineService.add(snapshot);
+        const restored = await this.deadlineService.getById(newId);
+        if (restored) await this.notifScheduler.scheduleReminders(restored);
+      },
+    });
   }
 
   openAdd(): void {
     this.router.navigate(['/deadlines/new']);
+  }
+
+  fabLabel(): string {
+    switch (this.activeTab()) {
+      case 'auto':    return 'Aggiungi dal catalogo';
+      case 'veicoli': return 'Aggiungi veicolo';
+      default:        return 'Aggiungi scadenza';
+    }
+  }
+
+  onFabClick(): void {
+    haptic();
+    switch (this.activeTab()) {
+      case 'auto':    this.router.navigate(['/deadlines/catalog']); break;
+      case 'veicoli': this.router.navigate(['/vehicles/new']);      break;
+      default:        this.router.navigate(['/deadlines/new']);     break;
+    }
   }
 
   openEdit(d: Deadline): void {
@@ -415,9 +447,27 @@ export class DeadlinesComponent {
   async onComplete(d: Deadline, e: Event): Promise<void> {
     e.stopPropagation();
     if (d.id == null) return;
+    haptic();
     await this.notifScheduler.cancelReminders(d);
     // Segna pagata; se ricorrente, crea la prossima occorrenza
     const next = await this.deadlineService.complete(d.id);
     if (next) await this.notifScheduler.scheduleReminders(next);
+
+    this.toast.show(
+      next ? 'Pagata · prossima creata' : 'Segnata come pagata',
+      {
+        variant: 'success',
+        actionLabel: 'Annulla',
+        action: async () => {
+          // Ripristina: riattiva l'originale e rimuovi l'occorrenza creata
+          if (next?.id != null) {
+            await this.notifScheduler.cancelReminders(next);
+            await this.deadlineService.remove(next.id);
+          }
+          await this.deadlineService.markUncompleted(d.id!);
+          await this.notifScheduler.scheduleReminders(d);
+        },
+      },
+    );
   }
 }
