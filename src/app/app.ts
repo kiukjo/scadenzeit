@@ -7,6 +7,7 @@ import { DeadlineService } from './core/services/deadline.service';
 import { NotificationSchedulerService } from './core/services/notification-scheduler.service';
 import { SupabaseAuthService } from './core/services/supabase-auth.service';
 import { SyncService } from './core/services/sync.service';
+import { WidgetService } from './core/services/widget.service';
 import { ThemeService } from './core/services/theme.service';
 import { NavComponent } from './shared/components/nav.component';
 import { ToastComponent } from './shared/components/toast.component';
@@ -28,6 +29,7 @@ export class App implements OnInit {
   private readonly notifScheduler  = inject(NotificationSchedulerService);
   private readonly authService     = inject(SupabaseAuthService);
   private readonly syncService     = inject(SyncService);
+  private readonly widgetService   = inject(WidgetService);
   private readonly router          = inject(Router);
   // ThemeService si auto-inizializza (applica data-theme all'avvio)
   private readonly _theme          = inject(ThemeService);
@@ -57,14 +59,21 @@ export class App implements OnInit {
         this.syncService.sync().catch(console.error);
       }
     });
+
+    // Aggiorna i dati del widget home screen a ogni variazione delle scadenze
+    effect(() => {
+      const deadlines = this.deadlineService.all();
+      this.widgetService.update(deadlines).catch(console.error);
+    });
   }
 
   async ngOnInit(): Promise<void> {
     // Carica il profilo utente da IndexedDB
     await this.settings.loadProfile();
 
-    // Richiedi permesso notifiche (no-op se già concesso)
+    // Richiedi permesso notifiche (no-op se già concesso) e crea il canale Android
     await this.notifScheduler.requestPermission();
+    await this.notifScheduler.createChannel();
 
     // Rischedula le notifiche per tutte le scadenze attive
     // (necessario al riavvio — le notifiche non persistono tra reinstallazioni)

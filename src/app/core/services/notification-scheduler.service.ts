@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { subDays } from 'date-fns';
 import { Deadline } from '../models';
@@ -12,6 +13,23 @@ export class NotificationSchedulerService {
   async requestPermission(): Promise<boolean> {
     const { display } = await LocalNotifications.requestPermissions();
     return display === 'granted';
+  }
+
+  /** Crea il canale notifiche (obbligatorio su Android 8+). No-op altrove. */
+  async createChannel(): Promise<void> {
+    if (Capacitor.getPlatform() !== 'android') return;
+    try {
+      await LocalNotifications.createChannel({
+        id: 'scadenze',
+        name: 'Scadenze',
+        description: 'Promemoria delle tue scadenze',
+        importance: 5,
+        visibility: 1,
+        vibration: true,
+      });
+    } catch {
+      // canale già esistente o API non disponibile — ignora
+    }
   }
 
   /** Cancella i reminder esistenti e ne schedula di nuovi per la scadenza */

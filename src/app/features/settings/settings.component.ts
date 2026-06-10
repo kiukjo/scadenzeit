@@ -1,5 +1,8 @@
 import { Component, inject, computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { SupabaseAuthService } from '../../core/services/supabase-auth.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { DeadlineService } from '../../core/services/deadline.service';
@@ -508,7 +511,7 @@ export class SettingsComponent {
   async exportBackup(): Promise<void> {
     const json = await this.backupService.exportAll();
     const date = new Date().toISOString().slice(0, 10);
-    this.download(`scadenzait-backup-${date}.json`, json, 'application/json');
+    await this.download(`scadenzait-backup-${date}.json`, json, 'application/json');
     this.showDataToast('✓ Backup esportato');
   }
 
@@ -532,7 +535,7 @@ export class SettingsComponent {
     }
   }
 
-  exportIcs(): void {
+  async exportIcs(): Promise<void> {
     const active = this.deadlineService.all().filter((d) => !d.completed);
     if (!active.length) {
       this.showDataToast('Nessuna scadenza da esportare');
@@ -540,11 +543,28 @@ export class SettingsComponent {
     }
     const ics = this.icsService.buildCalendar(active);
     const date = new Date().toISOString().slice(0, 10);
-    this.download(`scadenze-${date}.ics`, ics, 'text/calendar');
+    await this.download(`scadenze-${date}.ics`, ics, 'text/calendar');
     this.showDataToast(`✓ ${active.length} scadenze esportate`);
   }
 
-  private download(filename: string, content: string, mime: string): void {
+  /** Su device nativo: scrive il file e apre il foglio di condivisione. Su web: download. */
+  private async download(filename: string, content: string, mime: string): Promise<void> {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Filesystem.writeFile({
+          path: filename,
+          data: content,
+          directory: Directory.Cache,
+          encoding: Encoding.UTF8,
+        });
+        const { uri } = await Filesystem.getUri({ path: filename, directory: Directory.Cache });
+        await Share.share({ title: filename, url: uri, dialogTitle: 'Condividi o salva il file' });
+      } catch {
+        // condivisione annullata o non disponibile — ignora
+      }
+      return;
+    }
+
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
