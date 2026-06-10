@@ -4,4 +4,6 @@
     <string name="title_activity_main">scadenzait</string>
     <string name="package_name">it.scadenzait.app</string>
     <string name="custom_url_scheme">it.scadenzait.app</string>
+    <string name="widget_label">ScadenzaIT</string>
+    <string name="widget_description">Conto alla rovescia della prossima scadenza</string>
 </resources>
