@@ -190,7 +190,14 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
 <!-- ── Card template riusabile ── -->
 <ng-template #cardTpl let-d let-idx="idx">
   <div class="swipe-row stagger" [style.--i]="idx" [class.swiped]="swipedId()===d.id">
-    <div class="swipe-del" (click)="onDelete(d,$event)"><app-icon name="trash" [size]="20" color="#fff"/></div>
+    <div class="swipe-actions">
+      <button class="sa-btn snooze" (click)="onSnooze(d,$event)">
+        <app-icon name="alarm" [size]="17" color="#fff"/>+7g
+      </button>
+      <button class="sa-btn del" (click)="onDelete(d,$event)">
+        <app-icon name="trash" [size]="18" color="#fff"/>
+      </button>
+    </div>
     <div class="card" [class.pulse]="isPulse(d)">
       <span class="ubar" [style.background]="urgencyColor(d)" [style.boxShadow]="'0 0 8px '+urgencyColor(d)+'80'"></span>
       <button class="check-btn" (click)="onComplete(d,$event)" [attr.aria-label]="'Segna come completata'">
@@ -251,8 +258,11 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     .sec-title{font-size:11.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-secondary);flex:1}
     .sec-count{font-size:11px;font-weight:700;color:var(--text-tertiary)}
     .swipe-row{position:relative;margin-bottom:8px;opacity:0;animation:scadit-slideUp 420ms cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i,0)*35ms)}
-    .swipe-del{position:absolute;right:0;top:0;bottom:0;width:80px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--danger),#B5333E);border-radius:var(--radius);cursor:pointer}
-    .swipe-row.swiped .card{transform:translateX(-88px)}
+    .swipe-actions{position:absolute;right:0;top:0;bottom:0;display:flex;border-radius:var(--radius);overflow:hidden}
+    .sa-btn{width:74px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:800;color:#fff;font-family:inherit;letter-spacing:.3px}
+    .sa-btn.snooze{background:linear-gradient(135deg,#FFA502,#FF7F11)}
+    .sa-btn.del{background:linear-gradient(135deg,var(--danger),#B5333E)}
+    .swipe-row.swiped .card{transform:translateX(-156px)}
     .card{position:relative;transition:transform 220ms cubic-bezier(.2,.8,.2,1);border-radius:var(--radius);padding:13px 8px 13px 20px;display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--glass-border);overflow:hidden}
     .check-btn{width:32px;height:32px;border-radius:16px;border:1.5px solid var(--glass-border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 160ms ease}
     .check-btn:active{border-color:#2ED573;background:rgba(46,213,115,.12);transform:scale(.9)}
@@ -432,6 +442,36 @@ export class DeadlinesComponent {
   toggleSwipe(id: number | undefined): void {
     if (id == null) return;
     this.swipedId.set(this.swipedId() === id ? null : id);
+  }
+
+  async onSnooze(d: Deadline, e: Event): Promise<void> {
+    e.stopPropagation();
+    this.swipedId.set(null);
+    if (d.id == null) return;
+    haptic();
+
+    const original = new Date(d.dueDate);
+    const postponed = new Date(original);
+    postponed.setDate(postponed.getDate() + 7);
+
+    await this.deadlineService.update(d.id, { dueDate: postponed });
+    const saved = await this.deadlineService.getById(d.id);
+    if (saved) {
+      await this.notifScheduler.cancelReminders(saved);
+      await this.notifScheduler.scheduleReminders(saved);
+    }
+
+    this.toast.show('Posticipata di 7 giorni', {
+      actionLabel: 'Annulla',
+      action: async () => {
+        await this.deadlineService.update(d.id!, { dueDate: original });
+        const s = await this.deadlineService.getById(d.id!);
+        if (s) {
+          await this.notifScheduler.cancelReminders(s);
+          await this.notifScheduler.scheduleReminders(s);
+        }
+      },
+    });
   }
 
   async onDelete(d: Deadline, e: Event): Promise<void> {

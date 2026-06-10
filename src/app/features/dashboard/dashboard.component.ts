@@ -97,6 +97,22 @@ const IT_MO_S = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','no
     </div>
   }
 
+  <!-- Spese prossimi 6 mesi -->
+  @if (hasMonthlyData()) {
+    <div class="section-label">Spese prossimi 6 mesi</div>
+    <div class="chart-card">
+      <div class="bars">
+        @for (m of monthlySpend(); track m.label) {
+          <div class="bar-col">
+            <div class="bar-amt">{{ m.cents > 0 ? '€' + m.amount : '' }}</div>
+            <div class="bar-track"><span class="bar-fill" [style.height.%]="m.pct"></span></div>
+            <div class="bar-lbl">{{ m.label }}</div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <!-- Pagato quest'anno -->
   <div class="section-label">Storico</div>
   <div class="paid-card">
@@ -166,6 +182,13 @@ const IT_MO_S = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','no
     .paid-lbl{font-size:11.5px;color:var(--text-secondary);font-weight:600}
     .paid-val{font-size:20px;font-weight:800;letter-spacing:-.5px;margin-top:2px;font-variant-numeric:tabular-nums}
     .paid-count{font-size:11.5px;color:var(--text-tertiary);text-align:right}
+    .chart-card{border-radius:16px;padding:16px 14px 10px;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(20px)}
+    .bars{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;height:140px}
+    .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+    .bar-amt{font-size:9.5px;font-weight:700;color:var(--text-secondary);height:14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+    .bar-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+    .bar-fill{width:60%;max-width:26px;min-height:3px;border-radius:6px 6px 0 0;background:var(--accent-grad);box-shadow:0 0 10px rgba(108,99,255,.4);transition:height 600ms cubic-bezier(.2,.8,.2,1)}
+    .bar-lbl{font-size:10.5px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.4px;margin-top:8px}
     .hist{margin-top:10px;display:flex;flex-direction:column}
     .hist-row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--glass-border)}
     .hist-row:last-child{border-bottom:none}
@@ -243,6 +266,33 @@ export class DashboardComponent {
       pct: Math.round((cents / max) * 100),
     }));
   });
+
+  /** Somma importi in scadenza per ciascuno dei prossimi 6 mesi */
+  readonly monthlySpend = computed(() => {
+    const now = new Date();
+    const buckets = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return { key: d.getFullYear() * 12 + d.getMonth(), label: IT_MO_S[d.getMonth()], cents: 0 };
+    });
+    const byKey = new Map(buckets.map((b) => [b.key, b]));
+
+    for (const d of this.active()) {
+      if (!d.amountCents) continue;
+      const dt = new Date(d.dueDate);
+      const b = byKey.get(dt.getFullYear() * 12 + dt.getMonth());
+      if (b) b.cents += d.amountCents;
+    }
+
+    const max = Math.max(1, ...buckets.map((b) => b.cents));
+    return buckets.map((b) => ({
+      label: b.label,
+      cents: b.cents,
+      amount: eur(b.cents),
+      pct: b.cents > 0 ? Math.max(6, Math.round((b.cents / max) * 100)) : 0,
+    }));
+  });
+
+  readonly hasMonthlyData = computed(() => this.monthlySpend().some((m) => m.cents > 0));
 
   readonly paidThisYear = computed(() => {
     const completed = this.deadlineService.all().filter(d =>
