@@ -100,6 +100,16 @@ import { IconComponent } from '../../shared/components/icon.component';
           </div>
           <div class="sep"></div>
           <div class="row">
+            <span class="row-icon"><app-icon name="calendar" [size]="15" /></span>
+            <div class="row-label">Riepilogo settimanale<div class="row-hint">Notifica il lunedì mattina</div></div>
+            <button class="toggle-pill" type="button"
+              [class.on]="weeklyDigest()"
+              (click)="toggleWeeklyDigest()">
+              <span class="knob" [class.on]="weeklyDigest()"></span>
+            </button>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
             <span class="row-icon"><app-icon name="globe" [size]="15" /></span>
             <div class="row-label">Lingua</div>
             <span class="row-trail">Italiano</span>
@@ -329,6 +339,7 @@ import { IconComponent } from '../../shared/components/icon.component';
     .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:8px 0 0;animation:scadit-fadeIn 200ms ease both}
     .data-hint{font-size:11.5px;color:var(--text-tertiary);line-height:1.5;margin:8px 4px 0}
     .hour-sel{appearance:none;-webkit-appearance:none;background:var(--glass);border:1px solid var(--glass-border);border-radius:9px;padding:5px 12px;color:var(--text-primary);font-size:13px;font-weight:700;font-family:var(--font-mono);cursor:pointer}
+    .row-hint{font-size:11px;color:var(--text-tertiary);font-weight:400;margin-top:1px}
 
     /* ── Logout ── */
     .logout-btn {
@@ -417,6 +428,7 @@ export class SettingsComponent {
   readonly documentCount = computed(() => this.documentService.all().length);
 
   readonly notifHour    = this.settingsService.notifHour;
+  readonly weeklyDigest = this.settingsService.weeklyDigest;
   readonly hourOptions  = [7, 8, 9, 10, 12, 14, 18, 20, 21];
 
   pad(h: number): string {
@@ -429,7 +441,15 @@ export class SettingsComponent {
     await this.settingsService.setNotifHour(hour);
     // Ripianifica tutte le notifiche con il nuovo orario
     await this.notifScheduler.scheduleAll(this.deadlineService.all());
+    if (this.weeklyDigest()) await this.notifScheduler.setWeeklyDigest(true);
     this.showDataToast(`✓ Promemoria spostati alle ${this.pad(hour)}:00`);
+  }
+
+  async toggleWeeklyDigest(): Promise<void> {
+    const next = !this.weeklyDigest();
+    await this.settingsService.setWeeklyDigest(next);
+    await this.notifScheduler.setWeeklyDigest(next);
+    this.showDataToast(next ? '✓ Riepilogo settimanale attivato' : 'Riepilogo settimanale disattivato');
   }
 
   readonly emailShort = computed(() => {

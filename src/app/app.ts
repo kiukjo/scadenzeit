@@ -70,5 +70,10 @@ export class App implements OnInit {
     // (necessario al riavvio — le notifiche non persistono tra reinstallazioni)
     const deadlines = this.deadlineService.all();
     await this.notifScheduler.scheduleAll(deadlines);
+
+    // Ripristina il riepilogo settimanale se attivo
+    if (this.settings.weeklyDigest()) {
+      await this.notifScheduler.setWeeklyDigest(true);
+    }
   }
 }

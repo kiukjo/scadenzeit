@@ -69,6 +69,32 @@ export class NotificationSchedulerService {
     }
   }
 
+  private readonly WEEKLY_DIGEST_ID = 999001;
+
+  /**
+   * Abilita/disabilita il riepilogo settimanale: una notifica ricorrente
+   * il lunedì mattina all'orario promemoria scelto.
+   */
+  async setWeeklyDigest(enabled: boolean): Promise<void> {
+    try {
+      await LocalNotifications.cancel({ notifications: [{ id: this.WEEKLY_DIGEST_ID }] });
+    } catch {
+      // nessuna notifica esistente — ignora
+    }
+    if (!enabled) return;
+
+    await LocalNotifications.schedule({
+      notifications: [{
+        id: this.WEEKLY_DIGEST_ID,
+        title: 'Scadenze della settimana',
+        body: 'Dai un\'occhiata a cosa scade questa settimana 👀',
+        schedule: { on: { weekday: 2, hour: this.settings.notifHour(), minute: 0 }, allowWhileIdle: true },
+        smallIcon: 'ic_notification',
+        channelId: 'scadenze',
+      }],
+    });
+  }
+
   // ── Logica interna ────────────────────────────────────────────────────────
 
   /**
