@@ -4,6 +4,7 @@ import { DeadlineService } from '../../../core/services/deadline.service';
 import { VehicleService } from '../../../core/services/vehicle.service';
 import { CatalogService } from '../../../core/services/catalog.service';
 import { DeadlineFormService } from '../../../core/services/deadline-form.service';
+import { DocumentService } from '../../../core/services/document.service';
 import { NotificationSchedulerService } from '../../../core/services/notification-scheduler.service';
 import { DeadlineCategory, DeadlineRecurrence } from '../../../core/models';
 import { portaleFor } from '../../../core/constants/portali';
@@ -21,10 +22,12 @@ const CATEGORIES: CategoryOpt[] = [
 ];
 
 const RECURRENCES: { value: DeadlineRecurrence; label: string }[] = [
-  { value: 'once',     label: 'Una tantum' },
-  { value: 'monthly',  label: 'Mensile' },
-  { value: 'yearly',   label: 'Annuale' },
-  { value: 'biennial', label: 'Biennale' },
+  { value: 'once',       label: 'Una tantum' },
+  { value: 'monthly',    label: 'Mensile' },
+  { value: 'quarterly',  label: 'Trimestrale' },
+  { value: 'semiannual', label: 'Semestrale' },
+  { value: 'yearly',     label: 'Annuale' },
+  { value: 'biennial',   label: 'Biennale' },
 ];
 
 const REMINDER_OPTIONS = [1, 3, 7, 14, 30, 60, 90, 180];
@@ -177,18 +180,18 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
                 </div>
               </div>
 
-              <!-- Ripeti ogni anno toggle -->
-              <div class="toggle-row" style="margin-top:12px">
-                <div style="flex:1">
-                  <div class="tg-label">Ripeti ogni anno</div>
-                  <div class="tg-sub">Crea automaticamente la scadenza del prossimo anno</div>
-                </div>
-                <button type="button" class="toggle-pill"
-                  [class.on]="recurrence() === 'yearly'"
-                  (click)="toggleRecur()">
-                  <span class="knob" [class.on]="recurrence() === 'yearly'"></span>
-                </button>
+              <!-- Ricorrenza -->
+              <div class="section-label" style="margin-top:16px">Ricorrenza</div>
+              <div class="recur-grid">
+                @for (r of recurrences; track r.value) {
+                  <button type="button" class="recur-chip"
+                    [class.active]="recurrence() === r.value"
+                    (click)="recurrence.set(r.value)">{{ r.label }}</button>
+                }
               </div>
+              @if (recurrence() !== 'once') {
+                <p class="recur-hint">Quando la segni come pagata, viene creata automaticamente l'occorrenza successiva.</p>
+              }
             </section>
 
             <!-- Importo -->
@@ -220,6 +223,27 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
                 }
               </div>
             </section>
+
+            <!-- Documento allegato -->
+            @if (documents().length > 0) {
+              <section>
+                <div class="section-label">Documento allegato</div>
+                <div class="doc-pick">
+                  <select class="doc-sel" [value]="documentUuid() ?? ''"
+                    (change)="documentUuid.set($any($event.target).value || null)">
+                    <option value="">Nessuno</option>
+                    @for (doc of documents(); track doc.uuid) {
+                      <option [value]="doc.uuid">{{ doc.filename }}</option>
+                    }
+                  </select>
+                </div>
+                @if (linkedDoc()?.localPath) {
+                  <button type="button" class="doc-open" (click)="openDoc(linkedDoc()!.localPath!)">
+                    <app-icon name="image" [size]="14" /> Apri documento allegato
+                  </button>
+                }
+              </section>
+            }
 
             <!-- Note -->
             <section>
@@ -415,6 +439,18 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
       font-family: var(--font-mono); letter-spacing: -0.5px; caret-color: var(--accent);
     }
     .cur-tag { font-size: 11px; color: var(--text-tertiary); font-weight: 600; letter-spacing: 0.6px; }
+    .recur-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .recur-chip {
+      padding: 8px 14px; border-radius: 100px;
+      border: 1px solid var(--glass-border); background: var(--glass);
+      color: var(--text-primary); font-size: 12.5px; font-weight: 600;
+      cursor: pointer; transition: all 180ms ease; font-family: inherit;
+    }
+    .recur-chip.active { border-color: transparent; background: var(--accent-grad); color: white; }
+    .recur-hint { font-size: 11.5px; color: var(--text-tertiary); margin: 10px 2px 0; line-height: 1.5; }
+    .doc-pick { border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); overflow: hidden; }
+    .doc-sel { width: 100%; appearance: none; -webkit-appearance: none; background: transparent; border: none; outline: none; padding: 14px 16px; color: var(--text-primary); font-size: 14.5px; font-family: inherit; cursor: pointer; }
+    .doc-open { margin-top: 10px; display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 11px; border: 1px solid rgba(108,99,255,0.30); background: rgba(108,99,255,0.10); color: var(--accent); font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
     .reminder-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .reminder-chip {
       padding: 7px 13px; border-radius: 100px;
@@ -463,6 +499,7 @@ export class DeadlineFormComponent {
   private readonly catalogService  = inject(CatalogService);
   private readonly formService     = inject(DeadlineFormService);
   private readonly notifScheduler  = inject(NotificationSchedulerService);
+  private readonly documentService = inject(DocumentService);
   private readonly router          = inject(Router);
   private readonly route           = inject(ActivatedRoute);
   readonly vehicleService          = inject(VehicleService);
@@ -482,7 +519,13 @@ export class DeadlineFormComponent {
   readonly recurrence   = signal<DeadlineRecurrence>('once');
   readonly reminderDays = signal<number[]>([7, 1]);
   readonly notes        = signal('');
+  readonly documentUuid = signal<string | null>(null);
   readonly isSaving     = signal(false);
+
+  readonly documents = this.documentService.all;
+  readonly linkedDoc = computed(() =>
+    this.documents().find((d) => d.uuid === this.documentUuid()) ?? null,
+  );
 
   // ── Calendar state ────────────────────────────────────────────
   private readonly calMonthSig    = signal<Date>(new Date());
@@ -548,6 +591,7 @@ export class DeadlineFormComponent {
     this.reminderDays.set(d.reminders?.length ? d.reminders : [7, 1]);
     if (d.amountCents && d.amountCents > 0) this.amountStr.set((d.amountCents / 100).toFixed(2));
     if (d.vehicleId) this.vehicleId.set(d.vehicleId);
+    if (d.documentUuid) this.documentUuid.set(d.documentUuid);
     const date = new Date(d.dueDate);
     if (!isNaN(date.getTime())) {
       this.selectedDate.set(date);
@@ -564,6 +608,10 @@ export class DeadlineFormComponent {
 
   openPortale(url: string): void {
     window.open(url, '_blank', 'noopener');
+  }
+
+  openDoc(path: string): void {
+    window.open(path, '_blank');
   }
 
   readonly amountCents = computed(() => {
@@ -657,10 +705,6 @@ export class DeadlineFormComponent {
     );
   }
 
-  toggleRecur(): void {
-    this.recurrence.set(this.recurrence() === 'yearly' ? 'once' : 'yearly');
-  }
-
   // ── Save ──────────────────────────────────────────────────────
 
   async save(): Promise<void> {
@@ -677,6 +721,7 @@ export class DeadlineFormComponent {
         reminders:   this.reminderDays().length > 0 ? this.reminderDays() : [7, 1],
         notes:       this.notes().trim() || undefined,
         vehicleId:   this.vehicleId() ?? undefined,
+        documentUuid: this.documentUuid() ?? undefined,
       };
 
       if (this.isEditMode()) {

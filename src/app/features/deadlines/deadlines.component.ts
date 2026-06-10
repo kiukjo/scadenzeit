@@ -198,7 +198,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       </button>
       <div class="cbody" (click)="openEdit(d)">
         <div class="cname">{{ d.customName }}</div>
-        <div class="cdate">{{ fmtDate(d) }}</div>
+        <div class="cdate">{{ fmtDate(d) }}@if (d.documentUuid) { <span class="clip" title="Documento allegato">· 📎</span> }</div>
       </div>
       <div class="cright" (click)="openEdit(d)">
         <div class="cdays" [style.color]="urgencyColor(d)">{{ absDays(d) }}</div>

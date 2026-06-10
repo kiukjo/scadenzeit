@@ -8,11 +8,13 @@ export type DeadlineCategory =
   | 'famiglia';
 
 export type DeadlineRecurrence =
-  | 'once'      // una tantum
-  | 'monthly'   // mensile
-  | 'yearly'    // annuale — stessa data ogni anno
-  | 'biennial'  // biennale (es. revisione auto)
-  | 'variable'; // calcolata da altri dati (es. bollo auto da targa)
+  | 'once'        // una tantum
+  | 'monthly'     // mensile
+  | 'quarterly'   // trimestrale (ogni 3 mesi)
+  | 'semiannual'  // semestrale (ogni 6 mesi)
+  | 'yearly'      // annuale — stessa data ogni anno
+  | 'biennial'    // biennale (es. revisione auto)
+  | 'variable';   // calcolata da altri dati (es. bollo auto da targa)
 
 export interface Deadline {
   id?: number;            // PK auto-increment IndexedDB
@@ -27,6 +29,7 @@ export interface Deadline {
   completed: boolean;
   notes?: string;
   vehicleId?: string;     // uuid del veicolo collegato (se categoria veicoli)
+  documentUuid?: string;  // uuid documento allegato — SOLO locale, non sincronizzato
   updatedAt: Date;
   syncedAt?: Date;        // null = mai sincronizzato
 }
