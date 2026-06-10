@@ -90,6 +90,16 @@ import { IconComponent } from '../../shared/components/icon.component';
           </div>
           <div class="sep"></div>
           <div class="row">
+            <span class="row-icon"><app-icon name="bell" [size]="15" /></span>
+            <div class="row-label">Orario promemoria</div>
+            <select class="hour-sel" [value]="notifHour()" (change)="onHourChange($event)">
+              @for (h of hourOptions; track h) {
+                <option [value]="h">{{ pad(h) }}:00</option>
+              }
+            </select>
+          </div>
+          <div class="sep"></div>
+          <div class="row">
             <span class="row-icon"><app-icon name="globe" [size]="15" /></span>
             <div class="row-label">Lingua</div>
             <span class="row-trail">Italiano</span>
@@ -104,7 +114,7 @@ import { IconComponent } from '../../shared/components/icon.component';
           <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
             <div class="row-label">Informazioni</div>
-            <span class="row-trail">v 0.5.0</span>
+            <span class="row-trail">v 0.6.0</span>
           </div>
         </div>
       </div>
@@ -318,6 +328,7 @@ import { IconComponent } from '../../shared/components/icon.component';
     .spin-sm{width:16px;height:16px;border-radius:50%;border:2px solid var(--glass-border);border-top-color:var(--accent);animation:scadit-spin .7s linear infinite;flex-shrink:0}
     .toast-msg{font-size:12px;color:var(--success);font-weight:600;text-align:center;margin:8px 0 0;animation:scadit-fadeIn 200ms ease both}
     .data-hint{font-size:11.5px;color:var(--text-tertiary);line-height:1.5;margin:8px 4px 0}
+    .hour-sel{appearance:none;-webkit-appearance:none;background:var(--glass);border:1px solid var(--glass-border);border-radius:9px;padding:5px 12px;color:var(--text-primary);font-size:13px;font-weight:700;font-family:var(--font-mono);cursor:pointer}
 
     /* ── Logout ── */
     .logout-btn {
@@ -404,6 +415,22 @@ export class SettingsComponent {
 
   readonly deadlineCount = computed(() => this.deadlineService.all().length);
   readonly documentCount = computed(() => this.documentService.all().length);
+
+  readonly notifHour    = this.settingsService.notifHour;
+  readonly hourOptions  = [7, 8, 9, 10, 12, 14, 18, 20, 21];
+
+  pad(h: number): string {
+    return String(h).padStart(2, '0');
+  }
+
+  async onHourChange(ev: Event): Promise<void> {
+    const hour = parseInt((ev.target as HTMLSelectElement).value, 10);
+    if (isNaN(hour)) return;
+    await this.settingsService.setNotifHour(hour);
+    // Ripianifica tutte le notifiche con il nuovo orario
+    await this.notifScheduler.scheduleAll(this.deadlineService.all());
+    this.showDataToast(`✓ Promemoria spostati alle ${this.pad(hour)}:00`);
+  }
 
   readonly emailShort = computed(() => {
     const email = this.user()?.email ?? '';

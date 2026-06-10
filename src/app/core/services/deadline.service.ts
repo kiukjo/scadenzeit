@@ -99,10 +99,12 @@ export class DeadlineService {
   /** Calcola la data della prossima occorrenza per una ricorrenza. null se non ricorrente. */
   private static rollDate(date: Date, recurrence: DeadlineRecurrence): Date | null {
     switch (recurrence) {
-      case 'yearly':   return addYears(date, 1);
-      case 'biennial': return addYears(date, 2);
-      case 'monthly':  return addMonths(date, 1);
-      default:         return null; // once, variable
+      case 'yearly':     return addYears(date, 1);
+      case 'biennial':   return addYears(date, 2);
+      case 'monthly':    return addMonths(date, 1);
+      case 'quarterly':  return addMonths(date, 3);
+      case 'semiannual': return addMonths(date, 6);
+      default:           return null; // once, variable
     }
   }
 

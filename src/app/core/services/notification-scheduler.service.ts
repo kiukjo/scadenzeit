@@ -1,10 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { subDays } from 'date-fns';
 import { Deadline } from '../models';
+import { SettingsService } from './settings.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSchedulerService {
+  private readonly settings = inject(SettingsService);
 
   /** Richiede il permesso notifiche (da chiamare al primo avvio) */
   async requestPermission(): Promise<boolean> {
@@ -19,11 +21,13 @@ export class NotificationSchedulerService {
     if (deadline.completed) return;
 
     const now = new Date();
+    const hour = this.settings.notifHour();
 
     const notifications = deadline.reminders
       .map((days, idx) => {
         const rawDate = subDays(new Date(deadline.dueDate), days);
         const notifDate = this.toWorkday(rawDate);
+        notifDate.setHours(hour, 0, 0, 0); // orario promemoria scelto dall'utente
 
         // Non schedulare date già passate
         if (notifDate <= now) return null;
