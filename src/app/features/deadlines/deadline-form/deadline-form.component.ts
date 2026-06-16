@@ -6,6 +6,7 @@ import { CatalogService } from '../../../core/services/catalog.service';
 import { DeadlineFormService } from '../../../core/services/deadline-form.service';
 import { DocumentService } from '../../../core/services/document.service';
 import { NotificationSchedulerService } from '../../../core/services/notification-scheduler.service';
+import { ToastService, haptic } from '../../../core/services/toast.service';
 import { DeadlineCategory, DeadlineRecurrence } from '../../../core/models';
 import { portaleFor } from '../../../core/constants/portali';
 import { IconComponent } from '../../../shared/components/icon.component';
@@ -55,6 +56,14 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
         </header>
 
           <div class="body">
+
+            <!-- Segna come pagata (solo in modifica) -->
+            @if (isEditMode()) {
+              <button type="button" class="mark-paid" (click)="onMarkPaid()">
+                <app-icon name="check" [size]="17" color="#fff" [strokeWidth]="2.6" />
+                Segna come pagata
+              </button>
+            }
 
             <!-- Link al portale ufficiale -->
             @if (portale(); as p) {
@@ -311,6 +320,13 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
       font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px;
       text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; padding-left: 2px;
     }
+    .mark-paid {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 13px; border-radius: 14px; margin-bottom: 16px; cursor: pointer;
+      border: none; font-family: inherit; font-size: 14.5px; font-weight: 700; color: #fff;
+      background: linear-gradient(135deg, #2ED573, #1FA85A);
+      box-shadow: 0 8px 20px rgba(46,213,115,0.32);
+    }
     .portal-link {
       width: 100%; display: flex; align-items: center; gap: 11px;
       padding: 12px 14px; border-radius: 14px; margin-bottom: 16px; cursor: pointer;
@@ -500,6 +516,7 @@ export class DeadlineFormComponent {
   private readonly formService     = inject(DeadlineFormService);
   private readonly notifScheduler  = inject(NotificationSchedulerService);
   private readonly documentService = inject(DocumentService);
+  private readonly toast           = inject(ToastService);
   private readonly router          = inject(Router);
   private readonly route           = inject(ActivatedRoute);
   readonly vehicleService          = inject(VehicleService);
@@ -612,6 +629,35 @@ export class DeadlineFormComponent {
 
   openDoc(path: string): void {
     window.open(path, '_blank');
+  }
+
+  /** Segna pagata dal dettaglio: completa (+ occorrenza ricorrente) e torna alla lista */
+  async onMarkPaid(): Promise<void> {
+    const id = this.editId();
+    if (id == null || this.isSaving()) return;
+    haptic();
+
+    const current = await this.deadlineService.getById(id);
+    if (current) await this.notifScheduler.cancelReminders(current);
+
+    const next = await this.deadlineService.complete(id);
+    if (next) await this.notifScheduler.scheduleReminders(next);
+
+    this.toast.show(next ? 'Pagata · prossima creata' : 'Segnata come pagata', {
+      variant: 'success',
+      actionLabel: 'Annulla',
+      action: async () => {
+        if (next?.id != null) {
+          await this.notifScheduler.cancelReminders(next);
+          await this.deadlineService.remove(next.id);
+        }
+        await this.deadlineService.markUncompleted(id);
+        const restored = await this.deadlineService.getById(id);
+        if (restored) await this.notifScheduler.scheduleReminders(restored);
+      },
+    });
+
+    await this.router.navigate(['/deadlines']);
   }
 
   readonly amountCents = computed(() => {
