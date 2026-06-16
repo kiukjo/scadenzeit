@@ -313,7 +313,7 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
       font-size: 13px; font-weight: 500; cursor: pointer; padding: 6px; font-family: inherit;
     }
     .title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-    .body { flex: 1; overflow-y: auto; padding: 4px 18px 130px; scrollbar-width: none; }
+    .body { flex: 1; overflow-y: auto; padding: 4px 18px 20px; scrollbar-width: none; }
     .body::-webkit-scrollbar { display: none; }
     section { margin-bottom: 22px; }
     .section-label {
@@ -486,11 +486,11 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
       resize: none; caret-color: var(--accent); line-height: 1.5;
     }
     .footer {
-      position: absolute; left: 0; right: 0; bottom: 0;
+      flex-shrink: 0;
       padding: 14px 18px calc(env(safe-area-inset-bottom,0px) + 16px);
-      background: linear-gradient(180deg, transparent 0%, rgba(11,11,18,0.95) 40%);
+      background: var(--modal-bg);
+      border-top: 1px solid var(--glass-border);
     }
-    [data-theme="light"] .footer { background: linear-gradient(180deg,transparent 0%,rgba(255,255,255,.95) 40%); }
     .save {
       width: 100%; padding: 15px; border-radius: 16px; border: none; cursor: pointer;
       background: var(--accent-grad); color: white; font-size: 15px; font-weight: 700;
