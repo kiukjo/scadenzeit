@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { Router } from '@angular/router';
 import { DeadlineService } from '../../core/services/deadline.service';
 import { VehicleService } from '../../core/services/vehicle.service';
@@ -27,7 +28,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
 
 @Component({
   selector: 'app-deadlines',
-  imports: [IconComponent],
+  imports: [IconComponent, NgTemplateOutlet],
   template: `
 <div class="screen">
 
