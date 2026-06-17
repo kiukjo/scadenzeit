@@ -246,10 +246,8 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
                     }
                   </select>
                 </div>
-                @if (linkedDoc()?.localPath) {
-                  <button type="button" class="doc-open" (click)="openDoc(linkedDoc()!.localPath!)">
-                    <app-icon name="image" [size]="14" /> Apri documento allegato
-                  </button>
+                @if (linkedDoc(); as ld) {
+                  <p class="doc-linked"><app-icon name="image" [size]="13" /> Allegato: {{ ld.filename }} — apribile dalla sezione Documenti</p>
                 }
               </section>
             }
@@ -466,7 +464,7 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
     .recur-hint { font-size: 11.5px; color: var(--text-tertiary); margin: 10px 2px 0; line-height: 1.5; }
     .doc-pick { border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); overflow: hidden; }
     .doc-sel { width: 100%; appearance: none; -webkit-appearance: none; background: transparent; border: none; outline: none; padding: 14px 16px; color: var(--text-primary); font-size: 14.5px; font-family: inherit; cursor: pointer; }
-    .doc-open { margin-top: 10px; display: inline-flex; align-items: center; gap: 7px; padding: 9px 14px; border-radius: 11px; border: 1px solid rgba(108,99,255,0.30); background: rgba(108,99,255,0.10); color: var(--accent); font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .doc-linked { margin-top: 9px; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-tertiary); line-height: 1.4; }
     .reminder-grid { display: flex; flex-wrap: wrap; gap: 8px; }
     .reminder-chip {
       padding: 7px 13px; border-radius: 100px;
@@ -625,10 +623,6 @@ export class DeadlineFormComponent {
 
   openPortale(url: string): void {
     window.open(url, '_blank', 'noopener');
-  }
-
-  openDoc(path: string): void {
-    window.open(path, '_blank');
   }
 
   /** Segna pagata dal dettaglio: completa (+ occorrenza ricorrente) e torna alla lista */

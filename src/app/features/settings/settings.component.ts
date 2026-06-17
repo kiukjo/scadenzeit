@@ -66,7 +66,7 @@ import { IconComponent } from '../../shared/components/icon.component';
           <div class="row">
             <span class="row-icon"><app-icon name="user" [size]="15" /></span>
             <div class="row-label">Profilo</div>
-            <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
+            <span class="row-trail">{{ profileLabel() }}</span>
           </div>
           <div class="sep"></div>
           <div class="row">
@@ -119,15 +119,9 @@ import { IconComponent } from '../../shared/components/icon.component';
           </div>
           <div class="sep"></div>
           <div class="row">
-            <span class="row-icon"><app-icon name="book" [size]="15" /></span>
-            <div class="row-label">Centro assistenza</div>
-            <app-icon name="chevronRight" [size]="14" color="var(--text-tertiary)" />
-          </div>
-          <div class="sep"></div>
-          <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
-            <div class="row-label">Informazioni</div>
-            <span class="row-trail">v 0.6.0</span>
+            <div class="row-label">Versione</div>
+            <span class="row-trail">ScadenzaIT 0.7.0</span>
           </div>
         </div>
       </div>
@@ -429,6 +423,18 @@ export class SettingsComponent {
 
   readonly deadlineCount = computed(() => this.deadlineService.all().length);
   readonly documentCount = computed(() => this.documentService.all().length);
+
+  private readonly PROFILE_LABELS: Record<string, string> = {
+    dipendente: 'Dipendente',
+    autonomo: 'Autonomo',
+    proprietario_casa: 'Casa',
+    genitore: 'Famiglia',
+  };
+  readonly profileLabel = computed(() => {
+    const types = this.profile()?.profileTypes ?? [];
+    if (!types.length) return '—';
+    return types.map((t) => this.PROFILE_LABELS[t] ?? t).join(', ');
+  });
 
   readonly notifHour    = this.settingsService.notifHour;
   readonly weeklyDigest = this.settingsService.weeklyDigest;

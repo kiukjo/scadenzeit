@@ -114,7 +114,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
 
   <!-- ══ TAB: AUTOMATICHE ══ -->
   @if (activeTab() === 'auto') {
-    @if (autoGroups().length === 0) {
+    @if (autoGroups().length === 0 && !query()) {
       <div class="empty">
         <span class="eico">📋</span>
         <div class="etitle">Nessuna scadenza automatica</div>
@@ -140,7 +140,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
 
   <!-- ══ TAB: VEICOLI ══ -->
   @if (activeTab() === 'veicoli') {
-    @if (vehicleGroups().length === 0) {
+    @if (vehicleGroups().length === 0 && !query()) {
       <div class="empty">
         <span class="eico">🚗</span>
         <div class="etitle">Nessun veicolo registrato</div>
@@ -166,7 +166,7 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
 
   <!-- ══ TAB: MANUALI ══ -->
   @if (activeTab() === 'manuali') {
-    @if (manualList().length === 0) {
+    @if (manualList().length === 0 && !query()) {
       <div class="empty">
         <span class="eico">✏️</span>
         <div class="etitle">Nessuna scadenza manuale</div>
@@ -178,6 +178,15 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       @for (d of manualList(); track d.id; let i = $index) {
         <ng-container *ngTemplateOutlet="cardTpl; context:{$implicit:d,idx:i}"></ng-container>
       }
+    </div>
+  }
+
+  <!-- Nessun risultato di ricerca -->
+  @if (query() && noResults()) {
+    <div class="empty">
+      <span class="eico">🔍</span>
+      <div class="etitle">Nessun risultato</div>
+      <div class="esub">Nessuna scadenza trovata per “{{ query() }}”.</div>
     </div>
   }
 
@@ -380,6 +389,14 @@ export class DeadlinesComponent {
     const d = upcoming[0];
     return { name: d.customName, days: this.daysUntil(d), amount: d.amountCents ? (d.amountCents / 100).toFixed(2) : null };
   });
+
+  noResults(): boolean {
+    switch (this.activeTab()) {
+      case 'auto':    return this.autoList().length === 0;
+      case 'veicoli': return this.vehicleList().length === 0;
+      default:        return this.manualList().length === 0;
+    }
+  }
 
   hasOverdueIn(tab: TabKey): boolean {
     const list = tab === 'auto' ? this.autoList() : tab === 'veicoli' ? this.vehicleList() : this.manualList();

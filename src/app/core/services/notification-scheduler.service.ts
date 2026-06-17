@@ -41,7 +41,7 @@ export class NotificationSchedulerService {
     const now = new Date();
     const hour = this.settings.notifHour();
 
-    const notifications = deadline.reminders
+    const notifications = this.effectiveReminders(deadline)
       .map((days, idx) => {
         const rawDate = subDays(new Date(deadline.dueDate), days);
         const notifDate = this.toWorkday(rawDate);
@@ -67,10 +67,19 @@ export class NotificationSchedulerService {
     }
   }
 
+  /**
+   * Reminder effettivi: quelli configurati + sempre un avviso "scade oggi" (0).
+   * Deterministico, così gli id combaciano tra schedule e cancel.
+   */
+  private effectiveReminders(deadline: Deadline): number[] {
+    const r = deadline.reminders ?? [];
+    return r.includes(0) ? r : [...r, 0];
+  }
+
   /** Cancella tutti i reminder di una scadenza */
   async cancelReminders(deadline: Deadline): Promise<void> {
     if (!deadline.id) return;
-    const ids = deadline.reminders.map((_, idx) => ({
+    const ids = this.effectiveReminders(deadline).map((_, idx) => ({
       id: this.buildNotifId(deadline.id!, idx),
     }));
     try {
