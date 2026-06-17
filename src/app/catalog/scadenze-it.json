@@ -58,12 +58,10 @@
     "id": "tari",
     "name": "TARI — Tassa rifiuti",
     "category": "fisco",
-    "recurrence": "yearly",
-    "month": 6,
-    "day": 30,
+    "recurrence": "variable",
     "reminders": [30, 15, 7],
     "appliesTo": ["dipendente", "autonomo", "proprietario_casa", "genitore"],
-    "notes": "Scadenza indicativa — varia per comune. Aggiornare la data reale dalla bolletta"
+    "notes": "Le rate TARI sono fissate dal tuo Comune e variano di anno in anno: inserisci la data esatta riportata sulla bolletta (di solito 2-3 rate)"
   },
   {
     "id": "acconto_irpef",
