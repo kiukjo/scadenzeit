@@ -1,5 +1,6 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Capacitor } from '@capacitor/core';
 import { Filesystem } from '@capacitor/filesystem';
 import { DocumentService } from '../../core/services/document.service';
 import { ToastService, haptic } from '../../core/services/toast.service';
@@ -77,6 +78,16 @@ import { Document } from '../../core/models';
           }
         </div>
       }
+
+      <!-- Anteprima documento a schermo intero -->
+      @if (previewSrc(); as src) {
+        <div class="preview-overlay" (click)="closePreview()">
+          <button class="preview-close" type="button" aria-label="Chiudi">
+            <app-icon name="close" [size]="22" color="#fff" [strokeWidth]="2.4" />
+          </button>
+          <img class="preview-img" [src]="src" alt="Documento" (click)="$event.stopPropagation()" />
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -98,6 +109,9 @@ import { Document } from '../../core/models';
     .actions { display: flex; gap: 6px; }
     .icon-btn { width: 32px; height: 32px; border-radius: 10px; background: var(--glass); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-tertiary); transition: color 150ms ease; }
     .icon-btn.danger:active { color: var(--danger); }
+    .preview-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.92); display: flex; align-items: center; justify-content: center; padding: 20px; animation: scadit-fadeIn 200ms ease both; }
+    .preview-img { max-width: 100%; max-height: 100%; border-radius: 12px; object-fit: contain; }
+    .preview-close { position: absolute; top: calc(env(safe-area-inset-top,0px) + 14px); right: 16px; width: 42px; height: 42px; border-radius: 21px; background: rgba(255,255,255,0.15); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   `],
 })
 export class DocumentsComponent {
@@ -105,9 +119,15 @@ export class DocumentsComponent {
   private readonly toast           = inject(ToastService);
 
   readonly documents = this.documentService.all;
+  readonly previewSrc = signal<string | null>(null);
 
-  async openLocal(path: string): Promise<void> {
-    window.open(path, '_blank');
+  openLocal(path: string): void {
+    // convertFileSrc rende leggibile il file:// locale dentro la WebView
+    this.previewSrc.set(Capacitor.convertFileSrc(path));
+  }
+
+  closePreview(): void {
+    this.previewSrc.set(null);
   }
 
   async remove(doc: Document): Promise<void> {
