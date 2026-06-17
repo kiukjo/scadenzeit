@@ -288,8 +288,8 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
   styles: [`
     :host { display: block; }
     .page {
-      min-height: 100dvh; background: rgba(0,0,0,0.55);
-      display: flex; flex-direction: column; justify-content: flex-end; position: relative;
+      position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.55);
+      display: flex; flex-direction: column; justify-content: flex-end;
     }
     .scrim-top { flex: 1; min-height: 40px; cursor: pointer; }
     .sheet {

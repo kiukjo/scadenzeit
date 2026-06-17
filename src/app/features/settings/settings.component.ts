@@ -121,7 +121,7 @@ import { IconComponent } from '../../shared/components/icon.component';
           <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
             <div class="row-label">Versione</div>
-            <span class="row-trail">ScadenzaIT 0.7.0</span>
+            <span class="row-trail">ScadenzaIT 0.7.1</span>
           </div>
         </div>
       </div>
