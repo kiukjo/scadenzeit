@@ -11,4 +11,5 @@ export interface CatalogDeadline {
   reminders: number[];            // giorni di anticipo suggeriti
   appliesTo: UserProfileType[];   // profili utente a cui si applica
   notes?: string;
+  approxDate?: boolean;           // data indicativa (varia per comune) → mostra avviso
 }

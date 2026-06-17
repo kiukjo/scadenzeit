@@ -5,6 +5,7 @@ import { UserProfile } from '../models';
 const PROFILE_KEY = 'user_profile';
 const NOTIF_HOUR_KEY = 'notif_hour';
 const WEEKLY_DIGEST_KEY = 'weekly_digest';
+const DISMISSED_KEY = 'dismissed_catalog_ids';
 const DEFAULT_NOTIF_HOUR = 9;
 
 @Injectable({ providedIn: 'root' })
@@ -20,6 +21,9 @@ export class SettingsService {
   /** Riepilogo settimanale del lunedì abilitato */
   readonly weeklyDigest = signal<boolean>(false);
 
+  /** catalogId che l'utente ha rimosso "per sempre" — non verranno ri-importati */
+  readonly dismissedCatalogIds = signal<string[]>([]);
+
   async loadProfile(): Promise<void> {
     const row = await this.db.settings.where('key').equals(PROFILE_KEY).first();
     if (row) {
@@ -33,6 +37,26 @@ export class SettingsService {
     if (digest != null) {
       this.weeklyDigest.set(digest);
     }
+    const dismissed = await this.get<string[]>(DISMISSED_KEY);
+    if (Array.isArray(dismissed)) {
+      this.dismissedCatalogIds.set(dismissed);
+    }
+  }
+
+  /** Segna una voce di catalogo come rimossa per sempre (non verrà ri-importata) */
+  async dismissCatalogId(id: string): Promise<void> {
+    const cur = this.dismissedCatalogIds();
+    if (cur.includes(id)) return;
+    const next = [...cur, id];
+    this.dismissedCatalogIds.set(next);
+    await this.set(DISMISSED_KEY, next);
+  }
+
+  /** Ripristina una voce precedentemente rimossa (es. quando viene ri-aggiunta) */
+  async restoreCatalogId(id: string): Promise<void> {
+    const next = this.dismissedCatalogIds().filter((x) => x !== id);
+    this.dismissedCatalogIds.set(next);
+    await this.set(DISMISSED_KEY, next);
   }
 
   async setNotifHour(hour: number): Promise<void> {

@@ -500,12 +500,16 @@ export class DeadlinesComponent {
     await this.notifScheduler.cancelReminders(d);
     await this.deadlineService.remove(d.id);
 
+    // Voce di catalogo → scartala "per sempre" (non verrà ri-importata)
+    if (d.catalogId) await this.settings.dismissCatalogId(d.catalogId);
+
     // Snapshot per il ripristino (senza id: ne riceverà uno nuovo)
     const { id: _omit, ...snapshot } = d;
     this.toast.show('Scadenza eliminata', {
       variant: 'danger',
       actionLabel: 'Annulla',
       action: async () => {
+        if (d.catalogId) await this.settings.restoreCatalogId(d.catalogId);
         const newId = await this.deadlineService.add(snapshot);
         const restored = await this.deadlineService.getById(newId);
         if (restored) await this.notifScheduler.scheduleReminders(restored);

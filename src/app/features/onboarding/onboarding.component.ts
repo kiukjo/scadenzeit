@@ -130,7 +130,10 @@ export class OnboardingComponent {
       await this.settingsService.saveProfile(profile);
 
       // Usa getAutoImportable: solo voci con data fissa nota (no "variable", no senza month/day)
-      const entries = this.catalogService.getAutoImportable(this.selectedTypes());
+      const dismissed = this.settingsService.dismissedCatalogIds();
+      const entries = this.catalogService
+        .getAutoImportable(this.selectedTypes())
+        .filter((e) => !dismissed.includes(e.id));
 
       for (const entry of entries) {
         const draft    = this.catalogService.toDraft(entry);

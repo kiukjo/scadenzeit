@@ -46,7 +46,7 @@ export class App implements OnInit {
   // Mostra la bottom nav solo nelle schermate autenticate
   readonly showNav = computed(() => {
     const url = this.currentUrl();
-    return !url.startsWith('/auth') && !url.startsWith('/onboarding');
+    return !url.startsWith('/auth') && !url.startsWith('/onboarding') && !url.startsWith('/intro');
   });
 
   constructor() {
