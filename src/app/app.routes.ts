@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { introGuard } from './core/guards/intro.guard';
 
 export const routes: Routes = [
   {
@@ -8,7 +9,13 @@ export const routes: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'intro',
+    loadComponent: () =>
+      import('./features/intro/intro.component').then((m) => m.IntroComponent),
+  },
+  {
     path: 'auth',
+    canActivate: [introGuard],
     loadChildren: () =>
       import('./features/auth/auth.routes').then((m) => m.AUTH_ROUTES),
   },

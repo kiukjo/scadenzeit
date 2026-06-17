@@ -173,6 +173,9 @@ export class CatalogPickerComponent {
   async add(e: CatalogDeadline): Promise<void> {
     haptic();
 
+    // Ri-aggiunta esplicita → annulla l'eventuale rimozione "per sempre"
+    await this.settings.restoreCatalogId(e.id);
+
     // Voci a data variabile → apri il form pre-compilato per scegliere la data
     if (!this.isFixed(e)) {
       this.router.navigate(['/deadlines/new'], {

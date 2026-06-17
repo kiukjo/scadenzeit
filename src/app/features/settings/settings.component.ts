@@ -121,7 +121,7 @@ import { IconComponent } from '../../shared/components/icon.component';
           <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
             <div class="row-label">Versione</div>
-            <span class="row-trail">ScadenzaIT 0.7.1</span>
+            <span class="row-trail">ScadenzaIT 0.8.0</span>
           </div>
         </div>
       </div>
@@ -489,11 +489,12 @@ export class SettingsComponent {
     if (!profileTypes?.length || this.isReimporting()) return;
     this.isReimporting.set(true);
     try {
+      const dismissed = this.settingsService.dismissedCatalogIds();
       const importable = this.catalogService.getAutoImportable(profileTypes);
       const existingIds = new Set(
         this.deadlineService.all().map(d => d.catalogId).filter(Boolean)
       );
-      const missing = importable.filter(e => !existingIds.has(e.id));
+      const missing = importable.filter(e => !existingIds.has(e.id) && !dismissed.includes(e.id));
       for (const entry of missing) {
         const draft    = this.catalogService.toDraft(entry);
         const deadline = DeadlineService.build(draft);

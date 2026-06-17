@@ -65,6 +65,14 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
               </button>
             }
 
+            <!-- Avviso data indicativa (es. TARI) -->
+            @if (approxDate()) {
+              <div class="warn-banner">
+                <span class="warn-ico">⚠️</span>
+                <span>Data <strong>indicativa</strong>: aggiornala con la scadenza prevista dal tuo Comune (vedi bolletta).</span>
+              </div>
+            }
+
             <!-- Link al portale ufficiale -->
             @if (portale(); as p) {
               <button type="button" class="portal-link" (click)="openPortale(p.url)">
@@ -318,6 +326,13 @@ const CAL_DOWS = ['L','M','M','G','V','S','D'];
       font-size: 10.5px; font-weight: 700; letter-spacing: 1.2px;
       text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 10px; padding-left: 2px;
     }
+    .warn-banner {
+      display: flex; align-items: flex-start; gap: 9px;
+      padding: 11px 13px; border-radius: 13px; margin-bottom: 16px;
+      background: rgba(255,165,2,0.12); border: 1px solid rgba(255,165,2,0.35);
+      color: var(--text-primary); font-size: 12.5px; line-height: 1.45;
+    }
+    .warn-ico { flex-shrink: 0; font-size: 15px; }
     .mark-paid {
       width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
       padding: 13px; border-radius: 14px; margin-bottom: 16px; cursor: pointer;
@@ -620,6 +635,12 @@ export class DeadlineFormComponent {
 
   /** Portale ufficiale collegato (Agenzia Entrate, INPS, ACI…) */
   readonly portale = computed(() => portaleFor(this.currentCatalogId(), this.category()));
+
+  /** Avviso "data indicativa" per voci di catalogo che variano per comune (es. TARI) */
+  readonly approxDate = computed(() => {
+    const id = this.currentCatalogId();
+    return id ? !!this.catalogService.getById(id)?.approxDate : false;
+  });
 
   openPortale(url: string): void {
     window.open(url, '_blank', 'noopener');
