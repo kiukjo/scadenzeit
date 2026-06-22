@@ -1,25 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
-import {
-  AdMob,
-  BannerAdSize,
-  BannerAdPosition,
-  BannerAdOptions,
-} from '@capacitor-community/admob';
+import { AdMob } from '@capacitor-community/admob';
 
 /**
- * Pubblicità AdMob (banner in fondo). App gratuita finanziata da ads.
+ * Pubblicità AdMob — annuncio Interstitial (schermo intero, anche video).
+ * App gratuita finanziata dagli ads.
  *
- * ⚠️ Gli ID qui sotto sono gli ID DI TEST ufficiali di Google.
- * Prima della pubblicazione vanno sostituiti con quelli reali del tuo
- * account AdMob (App ID nel AndroidManifest + adId qui sotto), e isTesting:false.
+ * Mostrato con parsimonia: mai alla prima apertura, e al massimo una volta
+ * ogni qualche minuto, su transizioni "naturali" (apertura riepilogo/calendario).
  */
-const TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
+const INTERSTITIAL_ID = 'ca-app-pub-1224566889235881/3988492250';
+const MIN_INTERVAL_MS = 3 * 60 * 1000; // almeno 3 minuti tra un annuncio e l'altro
+const K_LAST = 'promemo_ad_last';
 
 @Injectable({ providedIn: 'root' })
 export class AdsService {
   private initialized = false;
-  private bannerShown = false;
+  private showing = false;
   private readonly isNative = Capacitor.getPlatform() === 'android';
 
   async init(): Promise<void> {
@@ -32,31 +29,24 @@ export class AdsService {
     }
   }
 
-  async showBanner(): Promise<void> {
-    if (!this.isNative || this.bannerShown) return;
-    await this.init();
-    const options: BannerAdOptions = {
-      adId: TEST_BANNER_ID,
-      adSize: BannerAdSize.ADAPTIVE_BANNER,
-      position: BannerAdPosition.BOTTOM_CENTER,
-      margin: 56, // sopra la barra di navigazione
-      isTesting: true,
-    };
-    try {
-      await AdMob.showBanner(options);
-      this.bannerShown = true;
-    } catch {
-      /* ignora errori banner */
-    }
-  }
+  /** Mostra un interstitial se è passato abbastanza tempo dall'ultimo. */
+  async maybeShowInterstitial(): Promise<void> {
+    if (!this.isNative || this.showing) return;
 
-  async hideBanner(): Promise<void> {
-    if (!this.isNative || !this.bannerShown) return;
+    const now = Date.now();
+    const last = parseInt(localStorage.getItem(K_LAST) ?? '0', 10) || 0;
+    if (last && now - last < MIN_INTERVAL_MS) return;
+
+    this.showing = true;
     try {
-      await AdMob.hideBanner();
-      this.bannerShown = false;
+      await this.init();
+      await AdMob.prepareInterstitial({ adId: INTERSTITIAL_ID, isTesting: false });
+      await AdMob.showInterstitial();
+      localStorage.setItem(K_LAST, String(now));
     } catch {
-      /* ignora */
+      /* annuncio non pronto/non disponibile — ignora silenziosamente */
+    } finally {
+      this.showing = false;
     }
   }
 }
