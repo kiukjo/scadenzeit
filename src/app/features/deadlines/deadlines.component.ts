@@ -42,6 +42,9 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
       <button class="bell" type="button" (click)="toggleSearch()" aria-label="Cerca">
         <app-icon name="search" [size]="17" />
       </button>
+      <button class="bell" type="button" (click)="router.navigate(['/calendar'])" aria-label="Calendario">
+        <app-icon name="calendar" [size]="17" />
+      </button>
       <button class="bell" type="button" (click)="router.navigate(['/dashboard'])" aria-label="Riepilogo">
         <app-icon name="chart" [size]="17" />
       </button>
@@ -208,23 +211,23 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
         <app-icon name="trash" [size]="18" color="#fff"/>
       </button>
     </div>
-    <div class="card" [class.pulse]="isPulse(d)">
+    <div class="card" [class.pulse]="isPulse(d)" [class.dragging]="dragId()===d.id"
+      [style.transform]="cardTransform(d)"
+      (pointerdown)="onPointerDown($event,d)" (pointermove)="onPointerMove($event,d)"
+      (pointerup)="onPointerUp($event,d)" (pointercancel)="onPointerCancel()">
       <span class="ubar" [style.background]="urgencyColor(d)" [style.boxShadow]="'0 0 8px '+urgencyColor(d)+'80'"></span>
       <button class="check-btn" (click)="onComplete(d,$event)" [attr.aria-label]="'Segna come completata'">
         <app-icon name="check" [size]="13" color="#2ED573"/>
       </button>
-      <div class="cbody" (click)="openEdit(d)">
+      <div class="cbody">
         <div class="cname">{{ d.customName }}</div>
         <div class="cdate">{{ fmtDate(d) }}@if (d.documentUuid) { <span class="clip" title="Documento allegato">· 📎</span> }</div>
       </div>
-      <div class="cright" (click)="openEdit(d)">
+      <div class="cright">
         <div class="cdays" [style.color]="urgencyColor(d)">{{ absDays(d) }}</div>
         <div class="clabel" [style.color]="urgencyColor(d)">{{ daysUntil(d) < 0 ? 'fa' : 'gg' }}</div>
         @if (d.amountCents) { <div class="camt">€{{ (d.amountCents/100).toFixed(2) }}</div> }
       </div>
-      <button class="dots-btn" (click)="toggleSwipe(d.id);$event.stopPropagation()" aria-label="Elimina">
-        <app-icon name="dots" [size]="16"/>
-      </button>
     </div>
   </div>
 </ng-template>
@@ -272,8 +275,8 @@ const IT_D    = ['domenica','lunedì','martedì','mercoledì','giovedì','venerd
     .sa-btn{width:74px;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:800;color:#fff;font-family:inherit;letter-spacing:.3px}
     .sa-btn.snooze{background:linear-gradient(135deg,#FFA502,#FF7F11)}
     .sa-btn.del{background:linear-gradient(135deg,var(--danger),#B5333E)}
-    .swipe-row.swiped .card{transform:translateX(-156px)}
-    .card{position:relative;transition:transform 220ms cubic-bezier(.2,.8,.2,1);border-radius:var(--radius);padding:13px 8px 13px 20px;display:flex;align-items:center;gap:8px;background:var(--glass);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--glass-border);overflow:hidden}
+    .card{position:relative;transition:transform 220ms cubic-bezier(.2,.8,.2,1);border-radius:var(--radius);padding:13px 14px 13px 20px;display:flex;align-items:center;gap:10px;background:var(--glass);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid var(--glass-border);overflow:hidden;touch-action:pan-y;will-change:transform}
+    .card.dragging{transition:none}
     .check-btn{width:32px;height:32px;border-radius:16px;border:1.5px solid var(--glass-border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 160ms ease}
     .check-btn:active{border-color:#2ED573;background:rgba(46,213,115,.12);transform:scale(.9)}
     .dots-btn{width:28px;height:28px;border-radius:8px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-tertiary)}
@@ -309,6 +312,69 @@ export class DeadlinesComponent {
   readonly searchOpen = signal(false);
   readonly query      = signal('');
   private readonly today = new Date();
+
+  // ── Swipe / drag orizzontale ─────────────────────────────────
+  readonly dragId = signal<number | null>(null);
+  readonly dragDx = signal(0);
+  private startX = 0; private startY = 0; private baseOffset = 0;
+  private dragging = false; private decided = false; private horizontal = false;
+  private readonly OPEN_X = -156;
+
+  cardTransform(d: Deadline): string {
+    if (this.dragId() === d.id) return `translateX(${this.dragDx()}px)`;
+    if (this.swipedId() === d.id) return `translateX(${this.OPEN_X}px)`;
+    return 'none';
+  }
+
+  onPointerDown(e: PointerEvent, d: Deadline): void {
+    if (d.id == null) return;
+    if ((e.target as HTMLElement).closest('.check-btn')) return; // lascia il bottone
+    this.startX = e.clientX; this.startY = e.clientY;
+    this.baseOffset = this.swipedId() === d.id ? this.OPEN_X : 0;
+    this.dragging = true; this.decided = false; this.horizontal = false;
+    this.dragId.set(d.id);
+    this.dragDx.set(this.baseOffset);
+    try { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); } catch { /* noop */ }
+  }
+
+  onPointerMove(e: PointerEvent, d: Deadline): void {
+    if (!this.dragging || this.dragId() !== d.id) return;
+    const dx = e.clientX - this.startX;
+    const dy = e.clientY - this.startY;
+    if (!this.decided) {
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        this.decided = true;
+        this.horizontal = Math.abs(dx) > Math.abs(dy);
+        if (!this.horizontal) { this.cancelDrag(); return; } // scroll verticale
+      } else { return; }
+    }
+    if (this.horizontal) {
+      e.preventDefault();
+      this.dragDx.set(Math.max(this.OPEN_X, Math.min(0, this.baseOffset + dx)));
+    }
+  }
+
+  onPointerUp(e: PointerEvent, d: Deadline): void {
+    if (!this.dragging || this.dragId() !== d.id) return;
+    this.dragging = false;
+    if (!this.decided) {
+      // È stato un tap
+      this.dragId.set(null); this.dragDx.set(0);
+      if (this.swipedId() === d.id) this.swipedId.set(null);
+      else this.openEdit(d);
+      return;
+    }
+    if (this.horizontal) {
+      this.swipedId.set(this.dragDx() < -78 ? d.id! : null);
+    }
+    this.dragId.set(null); this.dragDx.set(0);
+  }
+
+  onPointerCancel(): void { this.cancelDrag(); }
+
+  private cancelDrag(): void {
+    this.dragging = false; this.dragId.set(null); this.dragDx.set(0);
+  }
 
   // ── Tab config ───────────────────────────────────────────────
   readonly tabs = [
@@ -455,11 +521,6 @@ export class DeadlinesComponent {
     const open = !this.searchOpen();
     this.searchOpen.set(open);
     if (!open) this.query.set('');
-  }
-
-  toggleSwipe(id: number | undefined): void {
-    if (id == null) return;
-    this.swipedId.set(this.swipedId() === id ? null : id);
   }
 
   async onSnooze(d: Deadline, e: Event): Promise<void> {
