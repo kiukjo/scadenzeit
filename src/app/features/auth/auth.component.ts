@@ -16,7 +16,7 @@ type Step = 'email' | 'otp' | 'loading' | 'error';
       <!-- Brand -->
       <div class="logo-wrap">
         <div class="logo-tile"><app-brand-logo [size]="56" /></div>
-        <div class="brand">Scadenza<span class="grad">IT</span></div>
+        <div class="brand">Prome<span class="grad">mo</span></div>
         <div class="tagline">
           @if (step() === 'email') { Mai più scadenze dimenticate. }
           @else { Codice inviato a {{ email() || 'la tua email' }} }

@@ -1,4 +1,4 @@
-package it.scadenzait.app;
+package it.promemo.app;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;

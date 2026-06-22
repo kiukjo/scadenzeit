@@ -12,10 +12,10 @@ export class IcsService {
     const lines: string[] = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//ScadenzaIT//Scadenze IT//IT',
+      'PRODID:-//Promemo//Scadenze IT//IT',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
-      'X-WR-CALNAME:Scadenze ScadenzaIT',
+      'X-WR-CALNAME:Scadenze Promemo',
     ];
 
     const stamp = formatStamp(new Date());
@@ -57,7 +57,7 @@ function buildDescription(d: Deadline): string {
   const parts: string[] = [];
   if (d.amountCents) parts.push(`Importo: € ${(d.amountCents / 100).toFixed(2)}`);
   if (d.notes) parts.push(d.notes);
-  parts.push('— da ScadenzaIT');
+  parts.push('— da Promemo');
   return parts.join('\\n');
 }
 

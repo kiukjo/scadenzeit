@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 
-const PKG = 'it.scadenzait.app';
+const PKG = 'it.promemo.app';
 const K_OPENS   = 'scadenzait_open_count';
 const K_RATED   = 'scadenzait_rated';        // '1' = già votato / non chiedere più
 const K_LAST    = 'scadenzait_review_last';  // timestamp ultima proposta

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">scadenzait</string>
-    <string name="title_activity_main">scadenzait</string>
-    <string name="package_name">it.scadenzait.app</string>
-    <string name="custom_url_scheme">it.scadenzait.app</string>
-    <string name="widget_label">ScadenzaIT</string>
+    <string name="app_name">Promemo</string>
+    <string name="title_activity_main">Promemo</string>
+    <string name="package_name">it.promemo.app</string>
+    <string name="custom_url_scheme">it.promemo.app</string>
+    <string name="widget_label">Promemo</string>
     <string name="widget_description">Conto alla rovescia della prossima scadenza</string>
 </resources>

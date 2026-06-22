@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'it.scadenzait.app',
-  appName: 'ScadenzaIT',
+  appId: 'it.promemo.app',
+  appName: 'Promemo',
   webDir: 'dist/scadenzait/browser',
   server: {
     androidScheme: 'https'

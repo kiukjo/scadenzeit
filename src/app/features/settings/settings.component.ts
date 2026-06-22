@@ -121,7 +121,7 @@ import { IconComponent } from '../../shared/components/icon.component';
           <div class="row">
             <span class="row-icon"><app-icon name="info" [size]="15" /></span>
             <div class="row-label">Versione</div>
-            <span class="row-trail">ScadenzaIT 0.9.0</span>
+            <span class="row-trail">Promemo 1.0.0</span>
           </div>
         </div>
       </div>
@@ -183,7 +183,7 @@ import { IconComponent } from '../../shared/components/icon.component';
       </div>
 
       <p class="footer">
-        Fatto in Italia con <span style="color:var(--danger)">♥</span> · ScadenzaIT
+        Fatto in Italia con <span style="color:var(--danger)">♥</span> · Promemo
       </p>
 
       <!-- ── Confirm dialog ──────────────────────────────────────── -->
@@ -518,7 +518,7 @@ export class SettingsComponent {
   async exportBackup(): Promise<void> {
     const json = await this.backupService.exportAll();
     const date = new Date().toISOString().slice(0, 10);
-    await this.download(`scadenzait-backup-${date}.json`, json, 'application/json');
+    await this.download(`promemo-backup-${date}.json`, json, 'application/json');
     this.showDataToast('✓ Backup esportato');
   }
 

@@ -1,4 +1,4 @@
-package it.scadenzait.app;
+package it.promemo.app;
 
 import com.getcapacitor.BridgeActivity;
 
