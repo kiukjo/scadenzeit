@@ -50,17 +50,20 @@ import { VehicleDeadlineCalculatorService } from '../../../core/services/vehicle
                 [value]="kwStr()" (input)="kwStr.set($any($event.target).value)" /></div>
             </div>
             <div>
-              <div class="sec-label">Regione</div>
+              <div class="sec-label">Provincia</div>
               <div class="field">
-                <select class="inp sel" [value]="regioneCode()" (change)="regioneCode.set($any($event.target).value)">
+                <select class="inp sel" [value]="provincia()" (change)="onProvinciaChange($any($event.target).value)">
                   <option value="">Seleziona…</option>
-                  @for (r of regioni; track r.code) {
-                    <option [value]="r.code">{{ r.name }}</option>
+                  @for (p of province; track p.sigla) {
+                    <option [value]="p.sigla">{{ p.name }} ({{ p.sigla }})</option>
                   }
                 </select>
               </div>
             </div>
           </div>
+          @if (regioneName()) {
+            <p class="hint">Bollo calcolato sulla tariffa: <strong>{{ regioneName() }}</strong></p>
+          }
 
           <div class="sec-label">Data immatricolazione</div>
           <div class="field"><input class="inp" type="date"
@@ -135,14 +138,24 @@ export class VehicleFormComponent {
   readonly marca           = signal('');
   readonly modello         = signal('');
   readonly kwStr           = signal('');
+  readonly provincia       = signal('');
   readonly regioneCode     = signal('');
   readonly immatDate       = signal('');
   readonly ultimaRevisione = signal('');
   readonly assicExpiry     = signal('');
   readonly isSaving        = signal(false);
 
-  readonly regioni  = this.calculator.getRegioni();
+  readonly province = this.calculator.getProvince();
   readonly isValid  = computed(() => this.targa().trim().length >= 6);
+  readonly regioneName = computed(() =>
+    this.regioneCode() ? this.calculator.regionName(this.regioneCode()) : '',
+  );
+
+  /** Alla scelta della provincia, ricava automaticamente la regione del bollo */
+  onProvinciaChange(sigla: string): void {
+    this.provincia.set(sigla);
+    this.regioneCode.set(sigla ? (this.calculator.regionFromProvincia(sigla) ?? '') : '');
+  }
 
   readonly deadlinePreview = computed(() => {
     if (!this.isValid()) return [];
@@ -158,6 +171,7 @@ export class VehicleFormComponent {
         marca:           this.marca().trim() || undefined,
         modello:         this.modello().trim() || undefined,
         kw:              this.kwStr() ? parseInt(this.kwStr(), 10) : undefined,
+        provincia:       this.provincia() || undefined,
         regioneCode:     this.regioneCode() || undefined,
         immatDate:       this.immatDate() ? new Date(this.immatDate()) : undefined,
         ultimaRevisione: this.ultimaRevisione() ? new Date(this.ultimaRevisione()) : undefined,

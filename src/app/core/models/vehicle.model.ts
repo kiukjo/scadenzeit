@@ -5,7 +5,8 @@ export interface Vehicle {
   marca?: string;
   modello?: string;
   kw?: number;          // per calcolo bollo ACI
-  regioneCode?: string; // es. 'IT-LO', 'IT-RM' — per tariffa bollo regionale
+  provincia?: string;   // sigla provincia (es. 'MI') — da cui si ricava la regione bollo
+  regioneCode?: string; // codice regione (es. 'LOM') — per tariffa bollo regionale
   immatDate?: Date;     // data immatricolazione (libretto)
   ultimaRevisione?: Date;
   assicExpiry?: Date;   // scadenza assicurazione RC
