@@ -72,12 +72,12 @@ export class App implements OnInit {
       this.widgetService.update(deadlines).catch(console.error);
     });
 
-    // Banner pubblicitario solo nelle schermate principali (non intro/auth/onboarding)
+    // Annuncio interstitial su transizioni naturali (riepilogo/calendario),
+    // con cap di frequenza interno. Mai su intro/auth/onboarding.
     effect(() => {
-      if (this.showNav()) {
-        this.ads.showBanner().catch(() => {});
-      } else {
-        this.ads.hideBanner().catch(() => {});
+      const url = this.currentUrl();
+      if (url.startsWith('/dashboard') || url.startsWith('/calendar')) {
+        this.ads.maybeShowInterstitial().catch(() => {});
       }
     });
   }
