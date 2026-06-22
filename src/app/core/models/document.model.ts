@@ -8,6 +8,7 @@ export interface Document {
   iv?: string;              // base64 — AES-GCM initialization vector
   sizeBytes?: number;
   mimeType?: string;
+  category?: string;        // 'personale' | 'casa' | 'veicolo' | 'fisco' | 'altro'
   notes?: string;
   updatedAt: Date;
   syncedAt?: Date;

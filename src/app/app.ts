@@ -11,16 +11,20 @@ import { WidgetService } from './core/services/widget.service';
 import { ThemeService } from './core/services/theme.service';
 import { NavComponent } from './shared/components/nav.component';
 import { ToastComponent } from './shared/components/toast.component';
+import { ReviewPromptComponent } from './shared/components/review-prompt.component';
+import { ReviewService } from './core/services/review.service';
+import { AdsService } from './core/services/ads.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, NavComponent, ToastComponent],
+  imports: [RouterOutlet, NavComponent, ToastComponent, ReviewPromptComponent],
   template: `
     <router-outlet />
     @if (showNav()) {
       <app-nav />
     }
     <app-toast />
+    <app-review-prompt />
   `,
 })
 export class App implements OnInit {
@@ -30,6 +34,8 @@ export class App implements OnInit {
   private readonly authService     = inject(SupabaseAuthService);
   private readonly syncService     = inject(SyncService);
   private readonly widgetService   = inject(WidgetService);
+  private readonly review          = inject(ReviewService);
+  private readonly ads             = inject(AdsService);
   private readonly router          = inject(Router);
   // ThemeService si auto-inizializza (applica data-theme all'avvio)
   private readonly _theme          = inject(ThemeService);
@@ -65,6 +71,15 @@ export class App implements OnInit {
       const deadlines = this.deadlineService.all();
       this.widgetService.update(deadlines).catch(console.error);
     });
+
+    // Banner pubblicitario solo nelle schermate principali (non intro/auth/onboarding)
+    effect(() => {
+      if (this.showNav()) {
+        this.ads.showBanner().catch(() => {});
+      } else {
+        this.ads.hideBanner().catch(() => {});
+      }
+    });
   }
 
   async ngOnInit(): Promise<void> {
@@ -84,5 +99,8 @@ export class App implements OnInit {
     if (this.settings.weeklyDigest()) {
       await this.notifScheduler.setWeeklyDigest(true);
     }
+
+    // Prompt recensione (solo per utenti già onboardati)
+    this.review.registerOpen(!!this.settings.profile());
   }
 }

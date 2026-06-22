@@ -34,6 +34,14 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'error';
                 [value]="filename()" (input)="filename.set($any($event.target).value)" />
             </div>
 
+            <div class="sec-label">Categoria</div>
+            <div class="cat-chips">
+              @for (c of cats; track c.key) {
+                <button type="button" class="cat-chip" [class.on]="category() === c.key"
+                  (click)="category.set(c.key)">{{ c.emoji }} {{ c.label }}</button>
+              }
+            </div>
+
             <div class="sec-label">Note — opzionale</div>
             <div class="field">
               <input class="inp" type="text" placeholder="es. Scade il 01/01/2030"
@@ -94,6 +102,9 @@ type UploadState = 'idle' | 'capturing' | 'saving' | 'error';
     .field { border-radius: 14px; background: var(--glass); border: 1px solid var(--glass-border); overflow: hidden; }
     .field:focus-within { border-color: rgba(108,99,255,0.65); box-shadow: 0 0 0 3px rgba(108,99,255,0.12); }
     .inp { width: 100%; min-width: 0; box-sizing: border-box; padding: 14px; background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 15px; font-family: inherit; caret-color: var(--accent); }
+    .cat-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cat-chip { padding: 8px 13px; border-radius: 100px; border: 1px solid var(--glass-border); background: var(--glass); color: var(--text-secondary); font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 160ms ease; }
+    .cat-chip.on { border-color: transparent; background: var(--accent-grad); color: #fff; }
     .capture-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
     .capture-btn { padding: 18px 10px; border-radius: 16px; border: 1px solid; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; font-family: inherit; transition: opacity 150ms ease; }
     .capture-btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -114,9 +125,18 @@ export class DocumentUploadComponent {
   private readonly documentService = inject(DocumentService);
   private readonly router          = inject(Router);
 
+  readonly cats = [
+    { key: 'personale', label: 'Personale', emoji: '🪪' },
+    { key: 'casa',      label: 'Casa',      emoji: '🏠' },
+    { key: 'veicolo',   label: 'Veicolo',   emoji: '🚗' },
+    { key: 'fisco',     label: 'Fisco',     emoji: '🧾' },
+    { key: 'altro',     label: 'Altro',     emoji: '📎' },
+  ];
+
   readonly state        = signal<UploadState>('idle');
   readonly filename     = signal('');
   readonly notes        = signal('');
+  readonly category     = signal('altro');
   readonly errorMessage = signal('');
 
   readonly cameraSource = CameraSource;
@@ -164,6 +184,7 @@ export class DocumentUploadComponent {
         localPath: uri,
         mimeType:  'image/jpeg',
         sizeBytes: stat.size,
+        category:  this.category(),
         notes:     this.notes().trim() || undefined,
       });
 
