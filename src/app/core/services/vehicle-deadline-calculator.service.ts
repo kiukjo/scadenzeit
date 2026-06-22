@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import { addYears } from 'date-fns';
 import bolloTariffe from '../../catalog/bollo-tariffe.json';
+import provinceData from '../../catalog/province-italiane.json';
 import { Vehicle, Deadline } from '../models';
 
 type BolloTariffe = Record<string, { name: string; base: number }>;
+interface Provincia { sigla: string; name: string; region: string; }
 
 @Injectable({ providedIn: 'root' })
 export class VehicleDeadlineCalculatorService {
-  private readonly tariffe = bolloTariffe as unknown as BolloTariffe;
+  private readonly tariffe  = bolloTariffe as unknown as BolloTariffe;
+  private readonly province = provinceData as Provincia[];
 
   /** Restituisce le regioni disponibili per il select del form veicolo */
   getRegioni(): { code: string; name: string }[] {
@@ -15,6 +18,21 @@ export class VehicleDeadlineCalculatorService {
       .filter(([k]) => !k.startsWith('_'))
       .map(([code, v]) => ({ code, name: v.name }))
       .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /** Elenco province italiane (sigla, nome, regione) ordinate per nome */
+  getProvince(): Provincia[] {
+    return this.province;
+  }
+
+  /** Ricava il codice regione (per il bollo) dalla sigla provincia */
+  regionFromProvincia(sigla: string): string | undefined {
+    return this.province.find((p) => p.sigla === sigla)?.region;
+  }
+
+  /** Nome leggibile della regione dal suo codice */
+  regionName(code: string): string {
+    return this.tariffe[code]?.name ?? code;
   }
 
   /** Calcola tutte le scadenze per un veicolo come bozze pronte per IndexedDB */

@@ -4,6 +4,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import { subDays } from 'date-fns';
 import { Deadline } from '../models';
 import { SettingsService } from './settings.service';
+import { isItalianHoliday } from '../utils/holidays';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationSchedulerService {
@@ -125,14 +126,18 @@ export class NotificationSchedulerService {
   // ── Logica interna ────────────────────────────────────────────────────────
 
   /**
-   * Logica smart anti-weekend: le scadenze fisco/lavoro non notificano
-   * di sabato o domenica — vengono anticipate al venerdì precedente.
+   * Logica smart: il promemoria non scatta di sabato, domenica o in un
+   * giorno festivo nazionale — viene anticipato al giorno lavorativo prima.
    */
   private toWorkday(date: Date): Date {
-    const day = date.getDay(); // 0 = domenica, 6 = sabato
-    if (day === 0) return subDays(date, 2); // domenica → venerdì
-    if (day === 6) return subDays(date, 1); // sabato → venerdì
-    return date;
+    let d = new Date(date);
+    // max 10 passi indietro (copre ponti festivi consecutivi)
+    for (let i = 0; i < 10; i++) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6 && !isItalianHoliday(d)) break;
+      d = subDays(d, 1);
+    }
+    return d;
   }
 
   private buildBody(daysLeft: number): string {
