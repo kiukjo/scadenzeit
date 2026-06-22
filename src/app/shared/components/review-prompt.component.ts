@@ -10,7 +10,7 @@ import { ReviewService } from '../../core/services/review.service';
       <div class="scrim" (click)="review.later()">
         <div class="card" (click)="$event.stopPropagation()">
           <div class="emoji">⭐️</div>
-          <div class="title">Ti piace ScadenzaIT?</div>
+          <div class="title">Ti piace Promemo?</div>
           <div class="body">Se ti sta facendo risparmiare scadenze (e multe!), una recensione ci aiuta tantissimo. Bastano 10 secondi.</div>
 
           <div class="stars">

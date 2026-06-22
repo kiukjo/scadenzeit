@@ -3,7 +3,7 @@ import { DexieService } from '../../db/dexie.service';
 import { Deadline, Vehicle, Document } from '../models';
 
 interface BackupPayload {
-  app: 'ScadenzaIT';
+  app: string;
   version: number;
   exportedAt: string;
   data: {
@@ -39,7 +39,7 @@ export class BackupService {
     ]);
 
     const payload: BackupPayload = {
-      app: 'ScadenzaIT',
+      app: 'Promemo',
       version: 1,
       exportedAt: new Date().toISOString(),
       data: {
@@ -65,8 +65,8 @@ export class BackupService {
       throw new Error('File non leggibile (JSON non valido)');
     }
 
-    if (parsed?.app !== 'ScadenzaIT' || !parsed.data) {
-      throw new Error('Non è un file di backup di ScadenzaIT');
+    if ((parsed?.app !== 'Promemo' && parsed?.app !== 'ScadenzaIT') || !parsed.data) {
+      throw new Error('Non è un file di backup di Promemo');
     }
 
     const result: ImportResult = { deadlines: 0, vehicles: 0, documents: 0 };

@@ -31,7 +31,7 @@ const PROFILE_OPTIONS: ProfileOption[] = [
       <!-- Logo -->
       <div class="logo-wrap">
         <div class="logo-tile"><app-brand-logo [size]="38" /></div>
-        <span class="brand">Scadenza<span class="grad">IT</span></span>
+        <span class="brand">Prome<span class="grad">mo</span></span>
       </div>
 
       <!-- Hero -->

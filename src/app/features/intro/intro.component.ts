@@ -13,7 +13,7 @@ const SLIDES: Slide[] = [
   {
     emoji: '🔔',
     title: 'Mai più scadenze dimenticate',
-    body: 'ScadenzaIT tiene sotto controllo tasse, bollo, documenti e tutte le scadenze importanti della tua vita.',
+    body: 'Promemo tiene sotto controllo tasse, bollo, documenti e tutte le scadenze importanti della tua vita.',
     accent: '#6C63FF',
   },
   {
@@ -41,7 +41,7 @@ const INTRO_SEEN_KEY = 'scadenzait_intro_seen';
       <div class="topbar">
         <div class="logo-wrap">
           <div class="logo-tile"><app-brand-logo [size]="26" /></div>
-          <span class="brand">Scadenza<span class="grad">IT</span></span>
+          <span class="brand">Prome<span class="grad">mo</span></span>
         </div>
         @if (!isLast()) {
           <button class="skip" (click)="finish()">Salta</button>
