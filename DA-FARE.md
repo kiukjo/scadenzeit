@@ -3,8 +3,9 @@
 Aggiornato: 22 giugno 2026 · Stato: app funzionalmente completa, in preparazione al rilascio.
 
 ## 🔴 Bloccanti per pubblicare (test interni Play)
-- [ ] **Icona + splash** brandizzate Promemo → serve il logo PNG (≥512, meglio 1024).
-      Da lì: generare icona adattiva (foreground/background) + splash in tutte le densità.
+- [x] **Icona + splash** brandizzate Promemo → fatto: icona adattiva
+      (foreground/background) + splash in tutte le densità generate da
+      @capacitor/assets a partire dal design handoff.
 - [ ] **Keystore di firma** → creare il keystore (.jks) e configurare `android/app/build.gradle`
       (signingConfigs + buildTypes.release). ⚠️ Conservare keystore + password al sicuro:
       senza, non si potrà più aggiornare l'app.

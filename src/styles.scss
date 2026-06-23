@@ -40,6 +40,36 @@
   --font-mono: ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
   --nav-height: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  /* ── Spacing scale (4px base) ── */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+  /* ── Radii extra ── */
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* ── Shadows brand-tinted ── */
+  --shadow-sm:      0 2px 8px rgba(108, 99, 255, 0.10);
+  --shadow-md:      0 8px 24px rgba(108, 99, 255, 0.20);
+  --shadow-lg:      0 12px 36px rgba(108, 99, 255, 0.30);
+  --shadow-danger:  0 8px 24px rgba(255, 71, 87, 0.28);
+  --shadow-success: 0 8px 24px rgba(46, 213, 115, 0.22);
+
+  /* ── Typography scale ── */
+  --text-xs: 10.5px; --text-sm: 12px; --text-base: 14px; --text-md: 15px;
+  --text-lg: 17px; --text-xl: 20px; --text-2xl: 24px; --text-3xl: 28px; --text-4xl: 34px;
+  --weight-normal: 400; --weight-medium: 500; --weight-semibold: 600;
+  --weight-bold: 700; --weight-extrabold: 800;
+  --tracking-caps: 1.2px; --tracking-tight: -0.5px;
+
+  /* ── Layout ── */
+  --screen-pad-x: 16px;
+  --screen-pad-bottom: 110px;
+
+  /* ── Category palette ── */
+  --cat-fisco: #6C63FF; --cat-lavoro: #3B82F6; --cat-famiglia: #A29BFE;
+  --cat-casa: #2ED573; --cat-veicoli: #FFA502; --cat-documenti: #7BED9F; --cat-sanita: #FF6B81;
 }
 
 /* ── Dark ────────────────────────────────────────────────────── */
