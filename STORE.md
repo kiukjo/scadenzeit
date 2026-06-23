@@ -48,11 +48,12 @@ biagioni.f@gmail.com
 ## URL Privacy Policy
 https://kiukjo.github.io/scadenzeit/privacy.html   (da attivare: GitHub → Settings → Pages → branch main, cartella /docs)
 
-## Asset grafici richiesti dallo store (da preparare)
-- Icona app: 512×512 PNG (32-bit)
-- Immagine in evidenza (feature graphic): 1024×500 PNG
-- Screenshot telefono: almeno 2 (consigliati 4-8), 1080×1920 circa
+## Asset grafici richiesti dallo store — GENERATI in `store-assets/`
+- [x] Icona app: `store-assets/icon-512.png` (512×512)
+- [x] Feature graphic: `store-assets/feature-graphic.png` (1024×500)
+- [x] Screenshot telefono ×4: `store-assets/screenshot-1..4.png` (1080×1920)
 - (Opzionale) video promozionale
+> Rigenerabili con: `node scripts/gen-store-assets.mjs`
 
 ## Classificazione contenuti
 Per tutti (PEGI 3). Compilare il questionario IARC nella Play Console (presenza di pubblicità: Sì).
