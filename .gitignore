@@ -62,3 +62,8 @@ design_handoff*/
 # Log di build locali
 build-log.txt
 *.log
+
+# Firma release Android — NON committare mai keystore e password
+android/key.properties
+*.jks
+*.keystore
