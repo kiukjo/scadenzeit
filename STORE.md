@@ -46,7 +46,8 @@ scadenze, promemoria, tasse, IMU, bollo auto, revisione, 730, IVA, documenti, sc
 biagioni.f@gmail.com
 
 ## URL Privacy Policy
-https://kiukjo.github.io/scadenzeit/privacy.html   (da attivare: GitHub → Settings → Pages → branch main, cartella /docs)
+https://kiukjo.github.io/Promemo-Privay/   (repo pubblico separato: Promemo-Privay
+→ attivare GitHub Pages: Settings → Pages → branch main, cartella / root)
 
 ## Asset grafici richiesti dallo store — GENERATI in `store-assets/`
 - [x] Icona app: `store-assets/icon-512.png` (512×512)
