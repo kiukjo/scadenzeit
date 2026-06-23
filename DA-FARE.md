@@ -11,8 +11,10 @@ Aggiornato: 22 giugno 2026 · Stato: app funzionalmente completa, in preparazion
       gitignored: vanno conservati al sicuro (vedi sotto). Senza, non si potrà più aggiornare l'app.
 - [x] **AAB firmato**: `cd android && ./gradlew.bat bundleRelease` →
       `android/app/build/outputs/bundle/release/app-release.aab` (firmato, verificato).
-- [ ] **Privacy policy online**: attivare GitHub Pages (Settings → Pages → branch `main`, /docs)
-      → URL: https://kiukjo.github.io/scadenzeit/privacy.html (già pronta in docs/privacy.html).
+- [ ] **Privacy policy online**: repo pubblico separato `Promemo-Privay` (Pages è a
+      pagamento sui repo privati). Pagina già pushata come index.html. Resta solo:
+      attivare GitHub Pages sul repo Promemo-Privay (Settings → Pages → branch `main`,
+      cartella `/ (root)`) → URL: https://kiukjo.github.io/Promemo-Privay/
 
 ### 🔐 Credenziali di firma (CONSERVARE — non sono su git)
 - Keystore: `android/promemo-release.jks`
