@@ -37,7 +37,7 @@ type ScanState = 'idle' | 'requesting-permission' | 'scanning' | 'processing' | 
           </div>
 
           <div class="stagger" [style.--i]="1">
-            <button class="card" (click)="startOcrScan()">
+            <button class="card" (click)="goToF24()">
               <span class="card-ico" style="background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.25)">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
@@ -45,8 +45,8 @@ type ScanState = 'idle' | 'requesting-permission' | 'scanning' | 'processing' | 
                 </svg>
               </span>
               <div class="card-info">
-                <span class="card-name">Foto bolletta (OCR)</span>
-                <span class="card-desc">Scatta una foto — estraiamo data e importo</span>
+                <span class="card-name">Acquisisci F24 / bolletta</span>
+                <span class="card-desc">Foto → legge importo e data → crea o collega la scadenza</span>
               </div>
               <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
@@ -205,6 +205,10 @@ export class ScanComponent {
   reset(): void {
     this.state.set('idle');
     this.errorMessage.set('');
+  }
+
+  goToF24(): void {
+    this.router.navigate(['/scan/f24']);
   }
 
   goToManualForm(): void {

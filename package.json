@@ -27,6 +27,7 @@
     "@capacitor/local-notifications": "^8.2.0",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/share": "^8.0.1",
+    "@pantrist/capacitor-plugin-ml-kit-text-recognition": "^8.0.0",
     "@supabase/supabase-js": "^2.106.2",
     "date-fns": "^3.6.0",
     "dexie": "^3.2.7",
