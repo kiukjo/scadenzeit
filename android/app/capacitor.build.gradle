@@ -16,6 +16,7 @@ dependencies {
     implementation project(':capacitor-local-notifications')
     implementation project(':capacitor-preferences')
     implementation project(':capacitor-share')
+    implementation project(':pantrist-capacitor-plugin-ml-kit-text-recognition')
 
 }
 
