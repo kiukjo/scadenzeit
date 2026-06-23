@@ -6,12 +6,21 @@ Aggiornato: 22 giugno 2026 · Stato: app funzionalmente completa, in preparazion
 - [x] **Icona + splash** brandizzate Promemo → fatto: icona adattiva
       (foreground/background) + splash in tutte le densità generate da
       @capacitor/assets a partire dal design handoff.
-- [ ] **Keystore di firma** → creare il keystore (.jks) e configurare `android/app/build.gradle`
-      (signingConfigs + buildTypes.release). ⚠️ Conservare keystore + password al sicuro:
-      senza, non si potrà più aggiornare l'app.
-- [ ] **Generare l'AAB firmato**: `./gradlew bundleRelease` → file `.aab` da caricare in Play Console.
+- [x] **Keystore di firma** → creato `android/promemo-release.jks`, firma configurata in
+      `android/app/build.gradle` via `android/key.properties`. ⚠️ ENTRAMBI i file sono
+      gitignored: vanno conservati al sicuro (vedi sotto). Senza, non si potrà più aggiornare l'app.
+- [x] **AAB firmato**: `cd android && ./gradlew.bat bundleRelease` →
+      `android/app/build/outputs/bundle/release/app-release.aab` (firmato, verificato).
 - [ ] **Privacy policy online**: attivare GitHub Pages (Settings → Pages → branch `main`, /docs)
       → URL: https://kiukjo.github.io/scadenzeit/privacy.html (già pronta in docs/privacy.html).
+
+### 🔐 Credenziali di firma (CONSERVARE — non sono su git)
+- Keystore: `android/promemo-release.jks`
+- Alias: `promemo`
+- Password keystore = password chiave: `Prom3mo!2026`
+- Config: `android/key.properties`
+- ⚠️ Salva keystore + password in un password manager / backup sicuro. Se li perdi,
+  non potrai più pubblicare aggiornamenti dell'app con lo stesso identificativo.
 - [ ] **Play Console**: creare l'app, compilare scheda (vedi STORE.md), Data safety, IARC,
       caricare AAB nei test interni.
 
